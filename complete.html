@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>登録完了</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body { font-family: sans-serif; padding: 20px; }
+.box { margin-top: 20px; padding: 18px; border: 1px solid #ccc; background: #f9f9f9; }
+.no { font-size: 28px; font-weight: bold; color: #c00; letter-spacing: 2px; }
+.notice { margin-top: 16px; padding: 12px; background: #fff7e6; border-left: 4px solid #f5a623; }
+.section { margin-top: 22px; }
+label { display: block; margin-top: 10px; font-weight: bold; }
+input { font-size: 16px; padding: 8px; width: 100%; max-width: 360px; box-sizing: border-box; }
+button { margin-top: 16px; padding: 10px 18px; }
+.hidden { display: none; }
+.small { font-size: 13px; color: #555; margin-top: 6px; }
+</style>
+</head>
+<body>
+<h2>登録完了</h2>
+
+<div class="box">
+  <p>登録を受け付けました。</p>
+  <p>採寸番号は</p>
+  <div class="no" id="measureNo">----</div>
+  <div class="notice">
+    登録内容の修正には、<br>
+    採寸番号 または<br>
+    氏名・職種・入力した4桁の数字が必要です。<br>
+    必ずメモをお取りください。
+  </div>
+</div>
+
+<!-- メール送信（任意） -->
+<div class="section">
+  <h3>控えをメールで受け取る（任意）</h3>
+  <div class="notice">
+    採寸番号と入力内容を記録用として<br>
+    ご自身のメールアドレスに送信できます。<br>
+    <br>
+    ※ メールアドレスは弊社には登録されません。
+  </div>
+
+  <label for="email">メールアドレス</label>
+  <input id="email" type="email" inputmode="email" autocomplete="email">
+
+  <label for="emailConfirm">メールアドレス再入力</label>
+  <input id="emailConfirm" type="email" inputmode="email" autocomplete="email">
+
+  <button id="mailBtn" class="hidden">メールを送信する</button>
+</div>
+
+<button onclick="finish()">OK</button>
+
+<script>
+const MAIL_FLOW_URL = "https://defaultc8b61927a8e4402d9bae737ebea8e5.6c.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/00/workflows/7a69a2f1033b4d9e9d17e9a697da6dc3/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=bHBJudF_VqFv0Z9q2rWMSy1eP8eSkr8LRSoI2zR-_Z0";
+
+/* 通常のブラウザ「戻る」を抑止し、画面内ボタンだけで遷移させる */
+let allowApplicationNavigation = false;
+(function installBackGuard() {
+  const keepCurrentPage = () => {
+    try {
+      history.pushState({ uniformPageGuard: true }, "", location.href);
+    } catch (e) {
+      console.warn("履歴制御を設定できませんでした。", e);
+    }
+  };
+
+  history.replaceState({ uniformPageGuard: true }, "", location.href);
+  keepCurrentPage();
+
+  window.addEventListener("popstate", () => {
+    if (allowApplicationNavigation) return;
+    setTimeout(keepCurrentPage, 0);
+  });
+
+  window.addEventListener("pageshow", event => {
+    if (event.persisted && !allowApplicationNavigation) {
+      setTimeout(keepCurrentPage, 0);
+    }
+  });
+})();
+
+/* 読み込み */
+const raw = sessionStorage.getItem("uniformComplete");
+let info = {};
+try {
+  info = raw ? JSON.parse(raw) : {};
+} catch (e) {
+  info = {};
+}
+
+document.getElementById("measureNo").innerText = info.measureNo || "----";
+
+/* HTMLメールへ安全に文字を埋め込む */
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+/* メール入力一致チェック */
+function checkEmail() {
+  const e1 = document.getElementById("email").value.trim();
+  const e2 = document.getElementById("emailConfirm").value.trim();
+  const btn = document.getElementById("mailBtn");
+
+  if (!e1 || !e2) {
+    btn.classList.add("hidden");
+    return;
+  }
+
+  if (e1 !== e2) {
+    btn.classList.add("hidden");
+    return;
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e1)) {
+    btn.classList.add("hidden");
+    return;
+  }
+
+  btn.classList.remove("hidden");
+}
+
+document.getElementById("email").addEventListener("input", checkEmail);
+document.getElementById("emailConfirm").addEventListener("input", checkEmail);
+
+/* 控えメール用に送信データを整える */
+const MAIL_MEASUREMENT_HIDE_KEYS = new Set([
+  "登録ID",
+  "顧客コード",
+  "顧客名称",
+  "姓",
+  "名",
+  "セイ",
+  "メイ",
+  "性別",
+  "職種",
+  "部署",
+  "publicKey",
+  "customerKey",
+  "customer",
+  "採寸方法",
+  "上衣入力済",
+  "下衣入力済",
+  "登録日時",
+  "更新日時",
+  "登録番号",
+  "登録区分",
+  "有効フラグ",
+  "修正用番号",
+  "employeeNo",
+  "staffNo",
+  "measurementNo",
+  "registrationNo",
+  "entryType",
+  "activeFlag",
+  "contactPin",
+  "採寸番号",
+  "rosterMatchType",
+  "rosterMismatchInfo"
+]);
+
+const MAIL_MEASUREMENT_UNIT_MAP = {
+  "身長": "cm",
+  "体重": "kg",
+  "A_衿回り": "cm",
+  "B_肩巾": "cm",
+  "C1_袖丈_半袖": "cm",
+  "C2_袖丈_七分袖": "cm",
+  "C3_袖丈_長袖": "cm",
+  "D_胸回り": "cm",
+  "E_胴回り": "cm",
+  "F_腰回り": "cm",
+  "G_背丈": "cm",
+  "H_着丈": "cm",
+  "I_袖付回り": "cm",
+  "e_胴回り": "cm",
+  "f_腰回り": "cm",
+  "J_股上": "cm",
+  "K_股下": "cm",
+  "L_総丈": "cm",
+  "M_太股回り": "cm"
+};
+
+function formatMailMeasurementValue(key, value) {
+  const text = String(value ?? "").trim();
+  if (!text) return "";
+  const unit = MAIL_MEASUREMENT_UNIT_MAP[key] || "";
+  if (!unit) return text;
+  if (text.endsWith(unit)) return text;
+  return text + unit;
+}
+
+function prepareMailDraftForMail(mailDraft) {
+  const orders = Array.isArray(mailDraft.orders)
+    ? JSON.parse(JSON.stringify(mailDraft.orders))
+    : [];
+
+  const firstOrder = orders[0] || {};
+  let measurement = mailDraft.measurement
+    ? JSON.parse(JSON.stringify(mailDraft.measurement))
+    : null;
+
+  orders.forEach(o => {
+    o["姓"] = o["姓"] || o.sei || o["氏"] || "";
+    o["名"] = o["名"] || o.mei || "";
+    o["セイ"] = o["セイ"] || o.seiKana || o["シ"] || "";
+    o["メイ"] = o["メイ"] || o.meiKana || o["メイ"] || "";
+
+
+    delete o.publicKey;
+    delete o.customerKey;
+    delete o.customer;
+  });
+
+  if (measurement) {
+    measurement["姓"] = measurement["姓"] || measurement.sei || measurement["氏"] || firstOrder["姓"] || firstOrder.sei || firstOrder["氏"] || "";
+    measurement["名"] = measurement["名"] || measurement.mei || firstOrder["名"] || firstOrder.mei || "";
+    measurement["セイ"] = measurement["セイ"] || measurement.seiKana || measurement["シ"] || firstOrder["セイ"] || firstOrder.seiKana || firstOrder["シ"] || "";
+    measurement["メイ"] = measurement["メイ"] || measurement.meiKana || firstOrder["メイ"] || firstOrder.meiKana || "";
+
+    Object.keys(measurement).forEach(key => {
+      if (MAIL_MEASUREMENT_HIDE_KEYS.has(key)) {
+        delete measurement[key];
+        return;
+      }
+      const value = measurement[key];
+      if (value === null || value === undefined || String(value).trim() === "") {
+        delete measurement[key];
+        return;
+      }
+      measurement[key] = formatMailMeasurementValue(key, value);
+    });
+
+    // 旧項目名が混ざる場合はメール表示用から削除する
+    delete measurement.sei;
+    delete measurement.mei;
+    delete measurement.seiKana;
+    delete measurement.meiKana;
+  }
+
+  const firstAfterNormalize = orders[0] || {};
+
+  return {
+    orders,
+    measurement,
+    seiKana: firstAfterNormalize["セイ"] || firstAfterNormalize["シ"] || firstAfterNormalize.seiKana || "",
+    meiKana: firstAfterNormalize["メイ"] || firstAfterNormalize.meiKana || "",
+    kanaName: [
+      firstAfterNormalize["セイ"] || firstAfterNormalize["シ"] || firstAfterNormalize.seiKana || "",
+      firstAfterNormalize["メイ"] || firstAfterNormalize.meiKana || ""
+    ].filter(Boolean).join(" ")
+  };
+}
+
+
+function buildMailHtml(preparedMailDraft) {
+  const orders = preparedMailDraft.orders || [];
+  const first = orders[0] || {};
+  const measurement = preparedMailDraft.measurement || null;
+
+  const customerName = first.customerName || first["顧客名称"] || "";
+  const employeeNo = first.employeeNo || first.staffNo || first["職員番号"] || "";
+  const sei = first["姓"] || first.sei || first["氏"] || "";
+  const mei = first["名"] || first.mei || "";
+  const kanaName = preparedMailDraft.kanaName || "";
+  const gender = first.gender || first["性別"] || "";
+  const job = first.job || first["職種"] || "";
+  const department = first.department || first["部署"] || "";
+
+  const basicRows = [
+    ["顧客", customerName],
+    employeeNo ? ["職員番号", employeeNo] : null,
+    ["姓名", [sei, mei].filter(Boolean).join(" ")],
+    ["フリガナ", kanaName],
+    ["性別", gender],
+    ["職種", job],
+    ["部署", department || "なし"],
+    ["採寸番号", info.measureNo || ""]
+  ].filter(Boolean).map(([label, value]) => `
+    <tr>
+      <th style="width:180px;padding:9px 12px;border:1px solid #d9e1ea;background:#f3f6f9;text-align:left;">${escapeHtml(label)}</th>
+      <td style="padding:9px 12px;border:1px solid #d9e1ea;">${escapeHtml(value)}</td>
+    </tr>`).join("");
+
+  const orderRows = orders.map(o => {
+    const product = o.product || o["商品名"] || o["カタログ品名"] || "";
+    const productCode = o.productCode || o["商品コード"] || o["カタログ品番"] || "";
+    const color = o.color || o["色"] || o["色柄"] || "";
+    const size = o.size || o["サイズ"] || "";
+    const qty = o.qty || o["数量"] || "";
+    const inseam = o.inseamCm || o["股下cm"] || "";
+    return `
+      <tr>
+        <td style="padding:9px 10px;border:1px solid #d9e1ea;">${escapeHtml(product)}</td>
+        <td style="padding:9px 10px;border:1px solid #d9e1ea;">${escapeHtml(productCode)}</td>
+        <td style="padding:9px 10px;border:1px solid #d9e1ea;">${escapeHtml(color)}</td>
+        <td style="padding:9px 10px;border:1px solid #d9e1ea;text-align:center;">${escapeHtml(size)}</td>
+        <td style="padding:9px 10px;border:1px solid #d9e1ea;text-align:center;">${escapeHtml(qty)}</td>
+        <td style="padding:9px 10px;border:1px solid #d9e1ea;text-align:center;">${inseam ? escapeHtml(inseam) + "cm" : ""}</td>
+      </tr>`;
+  }).join("");
+
+  let measurementHtml = "";
+  if (measurement && Object.keys(measurement).length > 0) {
+    const rows = Object.entries(measurement).map(([key, value]) => `
+      <tr>
+        <th style="width:220px;padding:8px 10px;border:1px solid #d9e1ea;background:#f8fafc;text-align:left;">${escapeHtml(key)}</th>
+        <td style="padding:8px 10px;border:1px solid #d9e1ea;">${escapeHtml(value)}</td>
+      </tr>`).join("");
+    measurementHtml = `
+      <h3 style="margin:28px 0 10px;color:#234f7d;">別寸サイズ採寸入力内容</h3>
+      <table role="presentation" style="width:100%;border-collapse:collapse;">${rows}</table>`;
+  }
+
+  return `<!doctype html>
+<html lang="ja">
+<body style="margin:0;padding:0;background:#f4f6f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Yu Gothic',Meiryo,sans-serif;color:#222;line-height:1.6;">
+  <div style="max-width:720px;margin:0 auto;padding:24px 12px;">
+    <div style="background:#ffffff;border:1px solid #d9e1ea;border-radius:10px;overflow:hidden;">
+      <div style="padding:20px 24px;background:#234f7d;color:#ffffff;">
+        <div style="font-size:21px;font-weight:700;">ユニフォーム申請システム</div>
+        <div style="margin-top:4px;font-size:14px;">登録内容の控え</div>
+      </div>
+      <div style="padding:24px;">
+        <p style="margin:0 0 18px;">ユニフォーム申請を受け付けました。以下の内容をご確認ください。</p>
+
+        <div style="margin:0 0 22px;padding:14px 16px;background:#fff7e6;border-left:4px solid #f5a623;">
+          <div style="font-size:13px;color:#555;">採寸番号</div>
+          <div style="font-size:26px;font-weight:700;letter-spacing:1px;color:#c00;">${escapeHtml(info.measureNo || "")}</div>
+          <div style="margin-top:8px;font-size:13px;">登録内容の修正時に必要なため、大切に保管してください。</div>
+        </div>
+
+        <h3 style="margin:0 0 10px;color:#234f7d;">基本情報</h3>
+        <table role="presentation" style="width:100%;border-collapse:collapse;">${basicRows}</table>
+
+        <h3 style="margin:28px 0 10px;color:#234f7d;">商品選択内容</h3>
+        <div style="overflow-x:auto;">
+          <table role="presentation" style="width:100%;border-collapse:collapse;min-width:620px;">
+            <thead>
+              <tr>
+                <th style="padding:9px 10px;border:1px solid #d9e1ea;background:#eef4fa;text-align:left;">商品</th>
+                <th style="padding:9px 10px;border:1px solid #d9e1ea;background:#eef4fa;text-align:left;">品番</th>
+                <th style="padding:9px 10px;border:1px solid #d9e1ea;background:#eef4fa;text-align:left;">色</th>
+                <th style="padding:9px 10px;border:1px solid #d9e1ea;background:#eef4fa;">サイズ</th>
+                <th style="padding:9px 10px;border:1px solid #d9e1ea;background:#eef4fa;">数量</th>
+                <th style="padding:9px 10px;border:1px solid #d9e1ea;background:#eef4fa;">股下加工</th>
+              </tr>
+            </thead>
+            <tbody>${orderRows || '<tr><td colspan="6" style="padding:10px;border:1px solid #d9e1ea;">商品情報はありません。</td></tr>'}</tbody>
+          </table>
+        </div>
+
+        ${measurementHtml}
+
+        <div style="margin-top:28px;padding-top:18px;border-top:1px solid #d9e1ea;font-size:13px;color:#555;">
+          このメールはユニフォーム申請システムから自動送信されています。<br>
+          このメールへの返信はご遠慮ください。
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+/* メール送信 */
+document.getElementById("mailBtn").addEventListener("click", async () => {
+  const email = document.getElementById("email").value.trim();
+  const emailConfirm = document.getElementById("emailConfirm").value.trim();
+  const mailBtn = document.getElementById("mailBtn");
+
+  if (!email || !emailConfirm || email !== emailConfirm) {
+    alert("メールアドレスが一致していません。");
+    return;
+  }
+
+  const rawMailDraft = sessionStorage.getItem("uniformMailDraft");
+  let mailDraft = {};
+
+  try {
+    mailDraft = rawMailDraft ? JSON.parse(rawMailDraft) : {};
+  } catch (e) {
+    alert("送信用データの読み込みに失敗しました。");
+    return;
+  }
+
+  const preparedMailDraft = prepareMailDraftForMail(mailDraft);
+
+  const mailPayload = {
+    toEmail: email,
+    mailSubject: "【ユニフォーム申請】登録内容の控え",
+    mailHtml: buildMailHtml(preparedMailDraft)
+  };
+
+  mailBtn.disabled = true;
+  mailBtn.innerText = "送信中...";
+
+  try {
+    if (!MAIL_FLOW_URL || MAIL_FLOW_URL.includes("HTTP POST URLをここに貼る")) {
+      throw new Error("PA_控えメール送信のHTTP POST URLが未設定です。");
+    }
+    const res = await fetch(MAIL_FLOW_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(mailPayload)
+    });
+    const text = await res.text();
+    if (!res.ok) throw new Error(text || "控えメール送信フローの呼び出しに失敗しました。");
+    if (!text) throw new Error("控えメール送信フローの応答が空です。");
+    const json = JSON.parse(text);
+
+    if (json.result !== "ok") {
+      alert("控えメールの送信に失敗しました。\n時間をおいて再度お試しください。");
+      mailBtn.disabled = false;
+      mailBtn.innerText = "メールを送信する";
+      return;
+    }
+
+    alert("控えメールを送信しました。");
+
+    mailBtn.disabled = true;
+    mailBtn.innerText = "送信済み";
+
+    sessionStorage.removeItem("uniformMailDraft");
+    sessionStorage.removeItem("uniformComplete");
+
+    allowApplicationNavigation = true;
+    location.replace("https://www.yahoo.co.jp/");
+
+  } catch (err) {
+    alert("控えメール送信中にエラーが発生しました。\n通信環境を確認して、再度お試しください。\n\n" + err.message);
+
+    mailBtn.disabled = false;
+    mailBtn.innerText = "メールを送信する";
+  }
+});
+
+/* 完了後 */
+function finish() {
+  allowApplicationNavigation = true;
+  sessionStorage.removeItem("uniformComplete");
+  sessionStorage.removeItem("uniformMailDraft");
+  allowApplicationNavigation = true;
+    location.replace("https://www.yahoo.co.jp/");
+}
+</script>
+</body>
+</html>

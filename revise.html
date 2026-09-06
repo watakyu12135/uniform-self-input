@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>採寸内容修正</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  font-family: sans-serif;
+  padding: 20px;
+}
+
+.section {
+  margin-top: 18px;
+  padding: 14px;
+  border: 1px solid #ccc;
+  background: #fff;
+}
+
+.notice {
+  padding: 10px;
+  background: #fff7e6;
+  border-left: 4px solid #f5a623;
+  margin-bottom: 12px;
+}
+
+.error {
+  color: #c00;
+  font-weight: bold;
+}
+
+.success {
+  color: green;
+  font-weight: bold;
+}
+
+label {
+  display: block;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+input,
+select {
+  font-size: 16px;
+  padding: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.search-method {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid #d6dce5;
+  border-radius: 8px;
+  background: #f8fbff;
+}
+
+.search-method h4 {
+  margin: 0 0 12px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #4a90e2;
+  color: #234f7d;
+  font-size: 17px;
+}
+
+.search-separator {
+  margin: 18px 0 4px;
+  text-align: center;
+  font-weight: bold;
+  color: #666;
+}
+
+button {
+  margin-top: 14px;
+  padding: 10px 16px;
+  width: 100%;
+}
+
+.hidden {
+  display: none;
+}
+
+.result-box {
+  margin-top: 16px;
+  padding: 12px;
+  background: #f9f9f9;
+  border: 1px solid #ccc;
+}
+
+.item {
+  margin-top: 8px;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #ddd;
+}
+
+.small {
+  font-size: 13px;
+  color: #555;
+}
+
+.back-to-application {
+  position: sticky;
+  top: 10px;
+  z-index: 1000;
+  display: block;
+  width: 100%;
+  margin: 0 0 18px;
+  padding: 13px 16px;
+  border: 2px solid #2f6fae;
+  border-radius: 8px;
+  background: #eef6ff;
+  color: #174f86;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  box-sizing: border-box;
+  box-shadow: 0 3px 10px rgba(30, 79, 128, .15);
+  cursor: pointer;
+}
+.back-to-application:hover,
+.back-to-application:focus-visible {
+  background: #dcecff;
+  outline: 3px solid rgba(47,111,174,.22);
+}
+
+.search-choice-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.search-choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #c5d3e3;
+  border-radius: 8px;
+  background: #f8fbff;
+  font-weight: 700;
+  cursor: pointer;
+}
+.search-choice:has(input:checked) {
+  border-color: #2f6fae;
+  background: #eaf4ff;
+  box-shadow: 0 0 0 2px rgba(47,111,174,.12);
+}
+.search-choice input[type="radio"] {
+  width: auto;
+  margin: 0;
+  transform: scale(1.15);
+}
+.search-choice.hidden {
+  display: none !important;
+}
+.search-panel {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid #d6dce5;
+  border-radius: 8px;
+  background: #fff;
+}
+.search-panel h3 {
+  margin: 0 0 10px;
+  color: #234f7d;
+  font-size: 18px;
+}
+.input-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.search-button {
+  margin-top: 16px;
+  padding: 13px 16px;
+  font-size: 17px;
+  font-weight: 700;
+  border: 0;
+  border-radius: 8px;
+  background: #2f6fae;
+  color: #fff;
+  cursor: pointer;
+}
+.search-button:disabled {
+  background: #aab5c0;
+  cursor: not-allowed;
+}
+@media (max-width: 480px) {
+  body { padding: 12px; }
+  .section, .search-panel { padding: 12px; }
+  .search-choice { padding: 12px; }
+  .input-pair { gap: 8px; }
+}
+
+
+/* ===== PC表示を中央寄せのコンパクトなレイアウトにする ===== */
+html { box-sizing: border-box; }
+*, *::before, *::after { box-sizing: inherit; }
+body {
+  margin: 0;
+  background: #fff;
+  color: #222;
+}
+.page-shell {
+  width: min(100%, 920px);
+  margin: 0 auto;
+  padding: 20px;
+}
+.back-to-application {
+  position: sticky;
+  width: 100%;
+  max-width: 920px;
+}
+.section,
+.result-box {
+  width: 100%;
+  border-radius: 10px;
+  box-shadow: 0 3px 12px rgba(34, 55, 78, 0.06);
+}
+.search-choice-list {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.search-panel {
+  max-width: 680px;
+  margin: 16px auto 0;
+  padding: 18px 20px;
+}
+.input-pair {
+  grid-template-columns: repeat(2, minmax(0, 240px));
+  justify-content: start;
+  gap: 14px;
+}
+.search-panel > input,
+.search-panel > select {
+  max-width: 494px;
+}
+.search-panel label {
+  margin-top: 12px;
+}
+.search-button {
+  display: block;
+  width: min(100%, 680px);
+  margin: 16px auto 0;
+}
+.result-box {
+  padding: 18px;
+}
+.result-box .item {
+  max-width: 680px;
+  padding: 12px;
+  border-radius: 6px;
+}
+.result-box button {
+  display: block;
+  width: min(100%, 680px);
+  margin-left: auto;
+  margin-right: auto;
+}
+@media (max-width: 760px) {
+  .page-shell { padding: 14px; }
+  .search-choice-list { grid-template-columns: 1fr; }
+  .search-panel { max-width: none; padding: 14px; }
+  .input-pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .search-panel > input,
+  .search-panel > select { max-width: none; }
+  .result-box .item { max-width: none; }
+}
+@media (max-width: 420px) {
+  .input-pair { grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+
+<body>
+<div class="page-shell">
+<button id="backToApplicationButton" class="back-to-application" type="button">
+  ← ユニフォーム申請画面に戻る
+</button>
+
+<h2>採寸内容修正</h2>
+
+<div id="customerInfo">顧客：読み込み中...</div>
+<div id="message" class="error"></div>
+
+<div class="section">
+  <h3>検索方法を選択してください</h3>
+
+  <div class="search-choice-list" role="radiogroup" aria-label="検索方法">
+    <label class="search-choice">
+      <input type="radio" name="searchMethod" value="measureNo">
+      <span>採寸番号で検索</span>
+    </label>
+
+    <label class="search-choice">
+      <input type="radio" name="searchMethod" value="name">
+      <span>氏名情報で検索</span>
+    </label>
+
+    <label id="employeeMethodOption" class="search-choice hidden">
+      <input type="radio" name="searchMethod" value="employeeNo">
+      <span>職員番号で検索</span>
+    </label>
+  </div>
+
+  <div id="measureSearchPanel" class="search-panel hidden">
+    <h3>採寸番号で検索</h3>
+    <div class="notice">
+      初回登録時の採寸番号と本人確認用4桁番号を入力してください。
+    </div>
+
+    <label for="measureNo">採寸番号</label>
+    <input id="measureNo" placeholder="例：A123456" autocomplete="off">
+
+    <label for="measureRegistrationNo">本人確認用4桁番号</label>
+    <input id="measureRegistrationNo" inputmode="numeric" maxlength="4" autocomplete="off">
+  </div>
+
+  <div id="nameSearchPanel" class="search-panel hidden">
+    <h3>氏名情報で検索</h3>
+    <div class="notice">
+      初回登録時と同じ表記で入力してください。
+    </div>
+
+    <div class="input-pair">
+      <div>
+        <label for="sei">姓</label>
+        <input id="sei" autocomplete="off">
+      </div>
+      <div>
+        <label for="mei">名</label>
+        <input id="mei" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="input-pair">
+      <div>
+        <label for="seiKana">セイ</label>
+        <input id="seiKana" autocomplete="off">
+      </div>
+      <div>
+        <label for="meiKana">メイ</label>
+        <input id="meiKana" autocomplete="off">
+      </div>
+    </div>
+
+    <label for="job">職種</label>
+    <select id="job" disabled>
+      <option value="">顧客情報を読み込み中...</option>
+    </select>
+
+    <label for="nameRegistrationNo">本人確認用4桁番号</label>
+    <input id="nameRegistrationNo" inputmode="numeric" maxlength="4" autocomplete="off">
+  </div>
+
+  <div id="employeeSearchPanel" class="search-panel hidden">
+    <h3>職員番号で検索</h3>
+    <div class="notice">
+      初回登録時の職員番号・姓名・本人確認用4桁番号を入力してください。
+    </div>
+
+    <label for="employeeNo">職員番号</label>
+    <input id="employeeNo" inputmode="latin" autocomplete="off">
+
+    <div class="input-pair">
+      <div>
+        <label for="employeeSei">姓</label>
+        <input id="employeeSei" autocomplete="off">
+      </div>
+      <div>
+        <label for="employeeMei">名</label>
+        <input id="employeeMei" autocomplete="off">
+      </div>
+    </div>
+
+    <label for="employeeRegistrationNo">本人確認用4桁番号</label>
+    <input id="employeeRegistrationNo" inputmode="numeric" maxlength="4" autocomplete="off">
+  </div>
+
+  <button id="searchButton" class="search-button" type="button" disabled>
+    検索
+  </button>
+</div>
+
+<div id="resultArea" class="result-box hidden"></div>
+
+<script>
+
+/* 通常のブラウザ「戻る」を抑止し、画面内ボタンだけで遷移させる */
+let allowApplicationNavigation = false;
+(function installBackGuard() {
+  const keepCurrentPage = () => {
+    try {
+      history.pushState({ uniformPageGuard: true }, "", location.href);
+    } catch (e) {
+      console.warn("履歴制御を設定できませんでした。", e);
+    }
+  };
+
+  history.replaceState({ uniformPageGuard: true }, "", location.href);
+  keepCurrentPage();
+
+  window.addEventListener("popstate", () => {
+    if (allowApplicationNavigation) return;
+    setTimeout(keepCurrentPage, 0);
+  });
+
+  window.addEventListener("pageshow", event => {
+    if (event.persisted && !allowApplicationNavigation) {
+      setTimeout(keepCurrentPage, 0);
+    }
+  });
+})();
+document.getElementById("backToApplicationButton").addEventListener("click", () => {
+  allowApplicationNavigation = true;
+  const customer = getCustomer();
+  location.replace("index.html?customer=" + encodeURIComponent(customer));
+});
+
+const HP_DEADLINE_FLOW_URL = "https://defaultc8b61927a8e4402d9bae737ebea8e5.6c.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/25/workflows/d924c6a649f44455992c339678e781f3/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=KoZtWybbrtFHIi307-m3dgXNIegRf_eIxOIrbqZzG4Q";
+const SEARCH_FLOW_URL = "https://defaultc8b61927a8e4402d9bae737ebea8e5.6c.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/18/workflows/dc0e928adb2b4ef58cd09486a5cfdf71/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=AT_FwoPlrRofPBSLPRpuIjijIWwTbo9YvjgJXNkJE-g";
+
+let currentData = null;
+let customerKey = "";
+let customerCode = "";
+let lastSearchResult = null;
+
+function getCustomer() {
+  const url = new URL(window.location.href);
+  const customerKey =
+    url.searchParams.get("customer") ||
+    sessionStorage.getItem("uniformCustomer") ||
+    "gvhp8hex";
+
+  if (customerKey) {
+    sessionStorage.setItem("uniformCustomer", customerKey);
+  }
+
+  return customerKey;
+}
+
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+async function checkPageDeadline() {
+  const publicKey = getCustomer();
+
+  if (!HP_DEADLINE_FLOW_URL || HP_DEADLINE_FLOW_URL.includes("HTTP POST URLをここに貼る")) {
+    throw new Error("PA_HP有効期限チェックのHTTP POST URLが未設定です。");
+  }
+
+  const res = await fetch(HP_DEADLINE_FLOW_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      publicKey: publicKey,
+      customerKey: publicKey,
+      customer: publicKey
+    })
+  });
+
+  const text = await res.text();
+  if (!res.ok) throw new Error(text || "HP公開期限チェックに失敗しました。");
+  if (!text) throw new Error("HP公開期限チェックの応答が空です。");
+
+  let json;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    throw new Error("HP公開期限チェックの応答形式が正しくありません。");
+  }
+
+  if (json.result !== "ok" || json.found !== true || json.active !== true || json.expired === true) {
+    location.replace("expired.html");
+    return false;
+  }
+  return true;
+}
+
+function isBasicInfoActive(name) {
+  const infos = currentData && Array.isArray(currentData.basicInfos)
+    ? currentData.basicInfos
+    : [];
+  const info = infos.find(item => String(item.name || "") === name);
+  return !!(
+    info &&
+    (info.active === true || info.active === 1 || String(info.active).toLowerCase() === "true")
+  );
+}
+
+function setupRevisionSearchOptions() {
+  const jobSelect = document.getElementById("job");
+  const employeeMethodOption = document.getElementById("employeeMethodOption");
+
+  if (jobSelect) {
+    const jobs = Array.isArray(currentData?.jobs)
+      ? currentData.jobs
+          .map(item => String(item.job || "").trim())
+          .filter(Boolean)
+      : [];
+    const uniqueJobs = [...new Set(jobs)].sort((a, b) => a.localeCompare(b, "ja"));
+
+    jobSelect.innerHTML = '<option value="">選択</option>';
+    uniqueJobs.forEach(job => {
+      const option = document.createElement("option");
+      option.value = job;
+      option.textContent = job;
+      jobSelect.appendChild(option);
+    });
+    jobSelect.disabled = uniqueJobs.length === 0;
+  }
+
+  const employeeNoActive = isBasicInfoActive("職員番号");
+  if (employeeMethodOption) {
+    employeeMethodOption.classList.toggle("hidden", !employeeNoActive);
+  }
+
+  if (!employeeNoActive) {
+    ["employeeNo", "employeeSei", "employeeMei", "employeeRegistrationNo"]
+      .forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.value = "";
+      });
+  }
+}
+
+function clearSearchFields() {
+  [
+    "measureNo", "measureRegistrationNo",
+    "sei", "mei", "seiKana", "meiKana", "nameRegistrationNo",
+    "employeeNo", "employeeSei", "employeeMei", "employeeRegistrationNo"
+  ].forEach(id => {
+    const element = document.getElementById(id);
+    if (element) element.value = "";
+  });
+
+  const jobSelect = document.getElementById("job");
+  if (jobSelect) jobSelect.value = "";
+}
+
+function selectSearchMethod(method) {
+  clearSearchFields();
+
+  const panelMap = {
+    measureNo: "measureSearchPanel",
+    name: "nameSearchPanel",
+    employeeNo: "employeeSearchPanel"
+  };
+
+  Object.values(panelMap).forEach(id => {
+    document.getElementById(id)?.classList.add("hidden");
+  });
+
+  if (panelMap[method]) {
+    document.getElementById(panelMap[method])?.classList.remove("hidden");
+  }
+
+  const searchButton = document.getElementById("searchButton");
+  if (searchButton) searchButton.disabled = !panelMap[method];
+
+  document.getElementById("message").innerText = "";
+  document.getElementById("resultArea").classList.add("hidden");
+  document.getElementById("resultArea").innerHTML = "";
+  lastSearchResult = null;
+}
+
+function initializeSearchMethodUI() {
+  document.querySelectorAll('input[name="searchMethod"]').forEach(radio => {
+    radio.addEventListener("change", event => {
+      selectSearchMethod(event.target.value);
+    });
+  });
+
+  document.getElementById("searchButton")?.addEventListener("click", searchRevision);
+}
+
+function loadCustomerConfig() {
+  customerKey = getCustomer();
+
+  checkPageDeadline()
+    .then(ok => {
+      if (!ok) {
+        return null;
+      }
+
+ return fetch(`config/${customerKey}.json?ts=${Date.now()}`);
+    })
+    .then(res => {
+      if (!res) {
+        return null;
+      }
+
+      if (!res.ok) {
+        throw new Error("顧客設定ファイルが見つかりません。");
+      }
+
+      return res.json();
+    })
+    .then(data => {
+      if (!data) {
+        return;
+      }
+
+      currentData = data;
+      customerCode = String(currentData.customerCode || "").trim();
+
+      document.getElementById("customerInfo").innerText =
+        "顧客：" + (currentData.customerName || "");
+      setupRevisionSearchOptions();
+
+      if (!customerCode) {
+        document.getElementById("message").innerText =
+          "顧客コードが取得できません。設定ファイルを確認してください。";
+      }
+    })
+    .catch(err => {
+      document.getElementById("message").innerText =
+        "顧客設定の読み込みに失敗しました：" + err.message;
+    });
+}
+async function searchRevision() {
+  const message = document.getElementById("message");
+  const resultArea = document.getElementById("resultArea");
+
+  message.innerText = "";
+  resultArea.classList.add("hidden");
+  resultArea.innerHTML = "";
+  lastSearchResult = null;
+
+  if (!customerCode) {
+    alert("顧客情報の読み込みが完了していません。");
+    return;
+  }
+
+  const selectedMethod = document.querySelector('input[name="searchMethod"]:checked')?.value || "";
+  if (!selectedMethod) {
+    alert("検索方法を選択してください。");
+    return;
+  }
+
+  const payload = {
+    searchOnly: true,
+    customerCode: customerCode,
+    publicKey: customerKey,
+    customerKey: customerKey,
+    customer: customerKey,
+    includeInseam: true,
+    requestedOrderFields: ["股下加工可能", "股下cm"]
+  };
+
+  if (selectedMethod === "measureNo") {
+    const measureNo = document.getElementById("measureNo").value.trim();
+    const registrationNo = document.getElementById("measureRegistrationNo").value.trim();
+
+    if (!measureNo || !registrationNo) {
+      alert("採寸番号と本人確認用4桁番号を両方入力してください。");
+      return;
+    }
+    if (!/^\d{4}$/.test(registrationNo)) {
+      alert("本人確認用4桁番号は半角数字4桁で入力してください。");
+      return;
+    }
+
+    payload.searchType = "measureNo";
+    payload.measureNo = measureNo;
+    payload.registrationNo = registrationNo;
+  } else if (selectedMethod === "name") {
+    const sei = document.getElementById("sei").value.trim();
+    const mei = document.getElementById("mei").value.trim();
+    const seiKana = document.getElementById("seiKana").value.trim();
+    const meiKana = document.getElementById("meiKana").value.trim();
+    const job = document.getElementById("job").value.trim();
+    const registrationNo = document.getElementById("nameRegistrationNo").value.trim();
+
+    if (!sei || !mei || !seiKana || !meiKana || !job || !registrationNo) {
+      alert("氏名情報検索では、姓・名・セイ・メイ・職種・本人確認用4桁番号をすべて入力してください。");
+      return;
+    }
+    if (!/^\d{4}$/.test(registrationNo)) {
+      alert("本人確認用4桁番号は半角数字4桁で入力してください。");
+      return;
+    }
+
+    payload.searchType = "name";
+    payload.sei = sei;
+    payload.mei = mei;
+    payload.seiKana = seiKana;
+    payload.meiKana = meiKana;
+    payload.job = job;
+    payload.registrationNo = registrationNo;
+    payload["姓"] = sei;
+    payload["名"] = mei;
+    payload["セイ"] = seiKana;
+    payload["メイ"] = meiKana;
+    payload["職種"] = job;
+  } else if (selectedMethod === "employeeNo") {
+    if (!isBasicInfoActive("職員番号")) {
+      alert("この顧客では職員番号検索を使用できません。");
+      return;
+    }
+
+    const employeeNo = document.getElementById("employeeNo").value.trim();
+    const sei = document.getElementById("employeeSei").value.trim();
+    const mei = document.getElementById("employeeMei").value.trim();
+    const registrationNo = document.getElementById("employeeRegistrationNo").value.trim();
+
+    if (!employeeNo || !sei || !mei || !registrationNo) {
+      alert("職員番号検索では、職員番号・姓・名・本人確認用4桁番号をすべて入力してください。");
+      return;
+    }
+    if (!/^[A-Za-z0-9]+$/.test(employeeNo)) {
+      alert("職員番号は半角英数字で入力してください。");
+      return;
+    }
+    if (!/^\d{4}$/.test(registrationNo)) {
+      alert("本人確認用4桁番号は半角数字4桁で入力してください。");
+      return;
+    }
+
+    payload.searchType = "employeeNo";
+    payload.employeeNo = employeeNo;
+    payload.staffNo = employeeNo;
+    payload.sei = sei;
+    payload.mei = mei;
+    payload.registrationNo = registrationNo;
+    payload["職員番号"] = employeeNo;
+    payload["姓"] = sei;
+    payload["名"] = mei;
+  }
+
+  resultArea.classList.remove("hidden");
+  resultArea.innerText = "検索中...";
+
+  try {
+    const res = await fetch(SEARCH_FLOW_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const text = await res.text();
+    const json = JSON.parse(text);
+
+    if (json.result !== "ok") {
+      resultArea.innerHTML = `
+        <div class="error">検索中にエラーが発生しました。</div>
+        <pre>${escapeHtml(JSON.stringify(json, null, 2))}</pre>
+      `;
+      return;
+    }
+
+    if (!json.found) {
+      resultArea.innerHTML = `
+        <div class="error">該当する登録情報が見つかりませんでした。</div>
+        <div class="small">
+          入力内容、採寸番号、本人確認用4桁番号をご確認ください。
+        </div>
+      `;
+      return;
+    }
+
+    lastSearchResult = json;
+    renderSearchResult(json);
+
+  } catch (err) {
+    resultArea.innerHTML = `
+      <div class="error">検索に失敗しました。</div>
+      <div>${escapeHtml(err.message)}</div>
+    `;
+  }
+}
+
+function hasBespokeRevisionOrder(orders) {
+  return (orders || []).some(item => {
+    const size = String(item["サイズ"] || item.size || "").trim();
+    const sizeType = String(item["サイズ区分"] || item.sizeType || "").trim().toLowerCase();
+    return size === "別寸" || sizeType === "bespoke";
+  });
+}
+
+function renderSearchResult(result) {
+  const resultArea = document.getElementById("resultArea");
+  const orders = result.orders || [];
+  const first = orders[0] || {};
+  const measurement = result.measurement || null;
+
+  let html = "";
+
+  html += `<div class="success">該当する登録情報が見つかりました。</div>`;
+
+  html += `
+    <div style="margin-top:12px;">
+      <div>採寸番号：<strong>${escapeHtml(result.measureNo || "")}</strong></div>
+      <div>氏名：${escapeHtml(first["姓"] || first["氏"] || first.sei || "")} ${escapeHtml(first["名"] || first.mei || "")}</div>
+      <div>性別：${escapeHtml(first["性別"] || first.gender || "")}</div>
+      <div>職種：${escapeHtml(first["職種"] || first.job || "")}</div>
+      <div>部署：${escapeHtml(first["部署"] || first.department || "なし")}</div>
+    </div>
+  `;
+
+  html += `<h3>商品選択内容</h3>`;
+
+  if (orders.length === 0) {
+    html += `<div>商品データなし</div>`;
+  } else {
+    orders.forEach(item => {
+      html += `
+        <div class="item">
+          <div><strong>${escapeHtml(item["カタログ品名"] || item["商品名"] || item.product || "")}</strong> ${escapeHtml(item["カタログ品番"] || item["商品コード"] || item.productCode || "")}</div>
+          <div>色：${escapeHtml(item["色柄"] || item["色"] || item.color || "")}</div>
+          <div>サイズ：${escapeHtml(item["サイズ"] || item.size || "")}</div>
+          <div>数量：${escapeHtml(item["数量"] || item.qty || "")}</div>
+          ${(() => {
+            const inseamCm = String(item["股下cm"] ?? item.inseamCm ?? "").trim();
+            return inseamCm
+              ? `<div>股下加工：${escapeHtml(inseamCm)}cm</div>`
+              : "";
+          })()}
+        </div>
+      `;
+    });
+  }
+
+  if (hasBespokeRevisionOrder(orders)) {
+    html += `<h3>別寸サイズ採寸入力内容</h3>`;
+    if (!measurement) {
+      html += `<div>採寸入力なし</div>`;
+    } else {
+      html += renderMeasurementSummary(measurement);
+    }
+  }
+
+  html += `
+    <button type="button" onclick="startEdit()">
+      この内容を修正する
+    </button>
+  `;
+
+  resultArea.innerHTML = html;
+}
+
+const REVISION_MEASUREMENT_UNIT_MAP = {
+  "身長": "cm",
+  "体重": "kg",
+  "A_衿回り": "cm",
+  "B_肩巾": "cm",
+  "C1_袖丈_半袖": "cm",
+  "C2_袖丈_七分袖": "cm",
+  "C3_袖丈_長袖": "cm",
+  "D_胸回り": "cm",
+  "E_胴回り": "cm",
+  "F_腰回り": "cm",
+  "G_背丈": "cm",
+  "H_着丈": "cm",
+  "I_袖付回り": "cm",
+  "e_胴回り": "cm",
+  "f_腰回り": "cm",
+  "J_股上": "cm",
+  "K_股下": "cm",
+  "L_総丈": "cm",
+  "M_太股回り": "cm"
+};
+function formatRevisionMeasurementValue(key, value) {
+  const text = String(value ?? "").trim();
+  if (!text) return "";
+  const unit = REVISION_MEASUREMENT_UNIT_MAP[key] || "";
+  if (!unit) return text;
+  if (text.endsWith(unit)) return text;
+  return text + unit;
+}
+
+function renderMeasurementSummary(measurement) {
+  const hiddenKeys = [
+    "登録ID",
+    "顧客コード",
+    "顧客名称",
+    "氏",
+    "姓",
+    "名",
+    "セイ",
+    "メイ",
+    "性別",
+    "職種",
+    "部署",
+    "採寸区分",
+    "登録日時",
+    "更新日時",
+    "上衣入力済",
+    "下衣入力済",
+    "採寸番号",
+    "登録番号",
+    "登録区分",
+    "有効フラグ",
+    "修正用番号"
+  ];
+
+  let html = "";
+
+  Object.keys(measurement).forEach(key => {
+    const value = measurement[key];
+
+    if (hiddenKeys.includes(key)) return;
+    if (value === "" || value === null || value === undefined) return;
+
+    html += `<div>${escapeHtml(key)}：${escapeHtml(formatRevisionMeasurementValue(key, value))}</div>`;
+  });
+
+  if (!html) {
+    return `<div>採寸入力なし</div>`;
+  }
+
+  return html;
+}
+
+function startEdit() {
+  if (!lastSearchResult) {
+    alert("修正対象データがありません。");
+    return;
+  }
+
+  sessionStorage.removeItem("uniformDraft");
+  sessionStorage.removeItem("uniformDraftPending");
+  sessionStorage.removeItem("uniformReturnToIndex");
+  sessionStorage.removeItem("uniformConfirmPin");
+  sessionStorage.setItem("uniformEditData", JSON.stringify(lastSearchResult));
+  sessionStorage.setItem("uniformEditCustomer", customerKey);
+
+  location.href = "index.html?customer=" + encodeURIComponent(customerKey) + "&mode=edit";
+}
+
+initializeSearchMethodUI();
+loadCustomerConfig();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>登録内容確認</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body { font-family: sans-serif; padding: 20px; }
+.section { margin-top: 18px; padding: 14px; border: 1px solid #ccc; background: #fff; }
+.info-row { margin: 6px 0; }
+.notice { padding: 10px; background: #fff7e6; border-left: 4px solid #f5a623; }
+.error { color: #c00; font-weight: bold; }
+button { margin-top: 12px; margin-right: 8px; padding: 10px 16px; width: 100%; }
+input { font-size: 16px; padding: 6px; width: 100%; box-sizing: border-box; }
+label { font-weight: bold; display: block; margin-top: 10px; }
+.small { font-size: 13px; color: #555; }
+.category { font-weight: bold; margin-top: 14px; border-bottom: 1px solid #ccc; }
+.item { padding: 8px; background: #f9f9f9; margin-top: 6px; }
+.check-area { margin-top: 20px; }
+.check-area label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: normal;
+  margin-top: 0;
+}
+
+.check-area input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.privacy-link-button {
+  display: inline;
+  width: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #0066cc;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.privacy-link-button:hover,
+.privacy-link-button:focus-visible {
+  color: #004b99;
+  outline: 2px solid rgba(0,102,204,.25);
+  outline-offset: 2px;
+}
+.privacy-check-note {
+  margin-top: 8px;
+  color: #555;
+  font-size: 13px;
+}
+.privacy-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0,0,0,.58);
+}
+.privacy-modal.hidden { display: none; }
+.privacy-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(94vw, 760px);
+  height: min(88vh, 760px);
+  overflow: hidden;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 12px 38px rgba(0,0,0,.35);
+}
+.privacy-dialog-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #ccc;
+  background: #f6f9fc;
+}
+.privacy-dialog-header h3 { margin: 0; }
+.privacy-dialog-body { flex: 1; min-height: 0; }
+.privacy-frame { display: block; width: 100%; height: 100%; border: 0; }
+.privacy-dialog-footer {
+  padding: 10px 14px 14px;
+  border-top: 1px solid #ccc;
+  background: #fff;
+}
+.privacy-scroll-message {
+  margin: 0 0 8px;
+  color: #c00;
+  font-size: 13px;
+  font-weight: bold;
+  text-align: center;
+}
+#privacyCloseButton { margin: 0; }
+body.modal-open { overflow: hidden; }
+
+.sending-overlay { position: fixed; inset: 0; z-index: 20000; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(0,0,0,.68); text-align: center; }
+.sending-overlay.hidden { display: none; }
+.sending-panel { width: min(90vw, 460px); padding: 34px 24px; border-radius: 14px; background: #fff; box-shadow: 0 14px 44px rgba(0,0,0,.38); }
+.sending-wait, .sending-warning { margin: 0; font-size: 18px; font-weight: 700; line-height: 1.6; }
+.sending-status {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  min-height: 38px;
+  margin: 22px 0;
+  color: #174f86;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+.sending-dots {
+  display: inline-block;
+  width: 3ch;
+  text-align: left;
+  white-space: pre;
+}
+body.sending-locked { overflow: hidden; }
+.hidden {
+  display: none;
+}
+
+</style>
+</head>
+
+<body>
+
+<h2>登録内容確認</h2>
+<div id="message" class="error"></div>
+
+<!-- 基本情報 -->
+<div class="section">
+  <h3>基本情報</h3>
+  <div class="info-row">顧客：<span id="customerName"></span></div>
+  <div id="employeeNoRow" class="info-row hidden">職員番号：<span id="employeeNo"></span></div>
+  <div class="info-row">姓名：<span id="fullName"></span></div>
+<div class="info-row">フリガナ：<span id="fullNameKana"></span></div>
+  <div class="info-row">性別：<span id="gender"></span></div>
+  <div class="info-row">職種：<span id="job"></span></div>
+  <div class="info-row">部署：<span id="department"></span></div>
+  <div id="lendingPatternRow" class="info-row hidden">貸与パターン：<span id="lendingPattern"></span></div>
+</div>
+
+<!-- 商品内容（縦並び） -->
+<div class="section">
+  <h3>商品選択内容</h3>
+  <div id="orderArea"></div>
+</div>
+
+<!-- 採寸内容：別寸選択または採寸入力がある場合のみ表示 -->
+<div id="measurementSection" class="section hidden">
+  <h3>別寸サイズ採寸入力内容</h3>
+  <div id="measurementContent"></div>
+</div>
+
+<!-- 本人確認用4桁番号 -->
+<div id="pinSection" class="section">
+  <h3>本人確認用4桁番号</h3>
+  <div class="notice">
+    修正時に必要な数字4桁です。<br>
+    忘れない番号を入力してください。
+  </div>
+  <label for="pin">4桁番号</label>
+  <input id="pin" inputmode="numeric" maxlength="4" autocomplete="off">
+  <div class="small">例：1234　※0000など、同じ数字4つは使用できません。</div>
+</div>
+
+<div id="rosterResultArea" class="section hidden">
+  <h3>名簿確認結果</h3>
+  <div id="rosterResultMessage" class="notice"></div>
+</div>
+<div id="duplicateWarningArea" class="section hidden">
+  <h3>登録確認</h3>
+
+<div class="notice">
+  入力された情報と一致した登録があります。<br><br>
+  修正の場合は
+  <a id="duplicateReviseLink" href="revise.html">こちら</a>
+  をご利用ください。<br><br>
+  このまま登録する場合は、チェックを入れて進んでください。
+</div>
+
+  <div class="check-area">
+    <label>
+      <input type="checkbox" id="duplicateConfirmCheck">
+      確認の上、このまま登録する
+    </label>
+  </div>
+</div>
+
+<!-- 確認チェック --->
+<div class="check-area">
+  <label>
+    <input type="checkbox" id="confirmCheck" disabled>
+    <span id="newConfirmText">
+      <button id="privacyOpenButton" class="privacy-link-button" type="button">プライバシーポリシー</button>に同意し、入力内容に間違いがないことを確認しました
+    </span>
+    <span id="editConfirmText" class="hidden">修正内容を確認しました</span>
+  </label>
+  <div id="privacyCheckNote" class="privacy-check-note">
+    プライバシーポリシーを開き、最後までスクロールして閉じるとチェックできます。
+  </div>
+</div>
+
+<div id="privacyModal" class="privacy-modal hidden" role="dialog" aria-modal="true" aria-labelledby="privacyDialogTitle">
+  <div class="privacy-dialog">
+    <div class="privacy-dialog-header">
+      <h3 id="privacyDialogTitle">プライバシーポリシー・免責事項</h3>
+    </div>
+    <div class="privacy-dialog-body">
+      <iframe id="privacyFrame" class="privacy-frame" title="プライバシーポリシー・免責事項"></iframe>
+    </div>
+    <div class="privacy-dialog-footer">
+      <p id="privacyScrollMessage" class="privacy-scroll-message">画面を閉じるには最後までスクロールしてください。</p>
+      <button id="privacyCloseButton" type="button" disabled>確認して閉じる</button>
+    </div>
+  </div>
+</div>
+<div id="sendingOverlay" class="sending-overlay hidden" role="alert" aria-live="assertive" aria-busy="true">
+  <div class="sending-panel">
+    <p class="sending-wait">しばらくお待ち下さい。</p>
+    <div class="sending-status"><span>送信中</span><span id="sendingDots" class="sending-dots">.</span></div>
+    <p class="sending-warning">画面を閉じたり戻ったりしないで下さい。</p>
+  </div>
+</div>
+<button id="submitBtn" disabled>登録する</button>
+<button id="returnToInputButton" type="button">入力画面に戻る</button>
+
+<script>
+
+/* 戻り方にかかわらず、index.htmlが確認直前の入力内容を復元できるようにする */
+let allowApplicationNavigation = false;
+let confirmRegistrationCompleted = false;
+function markReturnToInput() {
+  if (confirmRegistrationCompleted) return;
+  if (!sessionStorage.getItem("uniformDraft")) return;
+  sessionStorage.setItem("uniformReturnToIndex", "1");
+  sessionStorage.setItem("uniformDraftPending", "1");
+}
+window.addEventListener("pagehide", markReturnToInput);
+document.getElementById("returnToInputButton").addEventListener("click", () => {
+  if (submitInProgress) return;
+  if (!draft) {
+    alert("戻す入力内容がありません。入力画面からやり直してください。");
+    return;
+  }
+  const pin = document.getElementById("pin");
+  if (pin) sessionStorage.setItem("uniformConfirmPin", pin.value || "");
+  sessionStorage.setItem("uniformReturnToIndex", "1");
+  sessionStorage.setItem("uniformDraftPending", "1");
+  allowApplicationNavigation = true;
+  const customerKey = getCustomerKey();
+  const editQuery = draft.editMode === true ? "&mode=edit" : "";
+  location.replace("index.html?customer=" + encodeURIComponent(customerKey) + editQuery + "&from=confirm");
+});
+
+const HP_DEADLINE_FLOW_URL = "https://defaultc8b61927a8e4402d9bae737ebea8e5.6c.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/25/workflows/d924c6a649f44455992c339678e781f3/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=KoZtWybbrtFHIi307-m3dgXNIegRf_eIxOIrbqZzG4Q";
+const FLOW_URL = "https://defaultc8b61927a8e4402d9bae737ebea8e5.6c.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/22/workflows/2fadd75538814f6eb11f426aee74c62e/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=r_0adeV2uMpNHxM0OzPQUcI8StgIf6zMICtxq4y2cG0";  
+let draft = null;
+
+/* HTMLエスケープ */
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function getCustomerKey() {
+  const url = new URL(window.location.href);
+  const customerKey =
+    url.searchParams.get("customer") ||
+    sessionStorage.getItem("uniformCustomer") ||
+    draft?.publicKey ||
+    draft?.customerKey ||
+    draft?.customer ||
+    "";
+
+  if (customerKey) {
+    sessionStorage.setItem("uniformCustomer", customerKey);
+  }
+
+  return customerKey;
+}
+
+async function checkPageDeadline() {
+  const publicKey = getCustomerKey();
+  if (!HP_DEADLINE_FLOW_URL || HP_DEADLINE_FLOW_URL.includes("HTTP POST URLをここに貼る")) {
+    throw new Error("PA_HP有効期限チェックのHTTP POST URLが未設定です。");
+  }
+  const res = await fetch(HP_DEADLINE_FLOW_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ publicKey, customerKey: publicKey, customer: publicKey })
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(text || "HP公開期限チェックに失敗しました。");
+  if (!text) throw new Error("HP公開期限チェックの応答が空です。");
+  let json;
+  try { json = JSON.parse(text); }
+  catch { throw new Error("HP公開期限チェックの応答形式が正しくありません。"); }
+  if (json.result !== "ok" || json.found !== true || json.active !== true || json.expired === true) {
+    location.replace("expired.html");
+    return false;
+  }
+  return true;
+}
+
+/* 読み込み */
+function loadDraft() {
+  const raw = sessionStorage.getItem("uniformDraft");
+  if (!raw) {
+    document.getElementById("message").innerText =
+      "確認する登録内容がありません。入力画面からやり直してください。";
+    return;
+  }
+
+  try {
+    draft = JSON.parse(raw);
+  } catch {
+    document.getElementById("message").innerText =
+      "登録内容の読み込みに失敗しました。入力画面からやり直してください。";
+    return;
+  }
+
+  const customerKey = getCustomerKey();
+  if (customerKey) {
+    draft.publicKey = customerKey;
+    draft.customerKey = customerKey;
+    draft.customer = customerKey;
+  }
+
+  const orders = draft.orders || [];
+  const first = orders[0] || {};
+  const isEdit = draft.editMode === true;
+  const pinInput = document.getElementById("pin");
+
+  if (isEdit) {
+    const inheritedRegistrationNo = String(
+      draft.registrationNo ||
+      draft["登録番号"] ||
+      first["登録番号"] ||
+      first.registrationNo ||
+      ""
+    ).trim();
+
+    if (pinInput) {
+      pinInput.value = inheritedRegistrationNo;
+      pinInput.readOnly = true;
+      pinInput.setAttribute("aria-readonly", "true");
+      pinInput.style.backgroundColor = "#e9ecef";
+      pinInput.style.color = "#555";
+      pinInput.style.cursor = "not-allowed";
+    }
+  } else {
+    const savedPin = sessionStorage.getItem("uniformConfirmPin");
+    if (pinInput) {
+      if (savedPin !== null) pinInput.value = savedPin;
+      pinInput.readOnly = false;
+      pinInput.removeAttribute("aria-readonly");
+      pinInput.style.backgroundColor = "";
+      pinInput.style.color = "";
+      pinInput.style.cursor = "";
+    }
+  }
+
+  const employeeNo = first.employeeNo || first.staffNo || first["職員番号"] || "";
+  const employeeNoRow = document.getElementById("employeeNoRow");
+  const employeeNoSpan = document.getElementById("employeeNo");
+  if (employeeNoRow && employeeNoSpan && employeeNo) {
+    employeeNoRow.classList.remove("hidden");
+    employeeNoSpan.innerText = employeeNo;
+  } else if (employeeNoRow) {
+    employeeNoRow.classList.add("hidden");
+  }
+
+  document.getElementById("customerName").innerText = first.customerName || "";
+  document.getElementById("fullName").innerText =
+    `${first.sei || ""} ${first.mei || ""}`.trim();
+document.getElementById("fullNameKana").innerText =
+  `${first.seiKana || first["セイ"] || ""} ${first.meiKana || first["メイ"] || ""}`.trim();
+  document.getElementById("gender").innerText = first.gender || "";
+  document.getElementById("job").innerText = first.job || "";
+  document.getElementById("department").innerText = first.department || "なし";
+  const lendingPattern = first["貸与パターン名"] || "";
+  const lendingPatternRow = document.getElementById("lendingPatternRow");
+  if (lendingPattern) {
+    document.getElementById("lendingPattern").innerText = lendingPattern;
+    lendingPatternRow.classList.remove("hidden");
+  } else {
+    lendingPatternRow.classList.add("hidden");
+  }
+
+  renderOrders(orders);
+  renderMeasurement(draft.measurement, orders);
+
+  if (draft.editMode) {
+    document.querySelector("h2").innerText = "登録内容確認（修正）";
+    document.getElementById("submitBtn").innerText = "修正内容を登録する";
+  }
+  setupConfirmationAgreement();
+  renderRosterCheckResult();
+}
+
+function renderOrders(orders) {
+  const area = document.getElementById("orderArea");
+  if (orders.length === 0) {
+    area.innerText = "商品選択なし";
+    return;
+  }
+
+  let html = "";
+  let currentCategory = "";
+
+  orders.forEach(o => {
+    if (o.productCategory !== currentCategory) {
+      currentCategory = o.productCategory;
+      html += `<div class="category">${escapeHtml(currentCategory)}</div>`;
+    }
+    const rawInseam = String(o["股下cm"] ?? o.inseamCm ?? "").trim();
+    const inseamCm = /^\d+$/.test(rawInseam) && Number(rawInseam) > 0 ? String(Number(rawInseam)) : "";
+    const alterable = Number(o["股下加工可能"] ?? o.inseamAlterable ?? 0) === 1;
+    const inseamHtml = inseamCm
+      ? `<div><strong>股下加工：</strong>${escapeHtml(inseamCm)}cm</div>`
+      : (alterable ? `<div>股下加工：なし</div>` : "");
+    html += `
+      <div class="item">
+        <div><strong>${escapeHtml(o.product)}</strong> ${escapeHtml(o.productCode)}</div>
+        <div>色：${escapeHtml(o.color)} ／ サイズ：${escapeHtml(o.size)} ／ 数量：${escapeHtml(o.qty)}</div>
+        ${inseamHtml}
+      </div>
+    `;
+  });
+
+  area.innerHTML = html;
+}
+
+/* 採寸入力内容の表示用設定 */
+const MEASUREMENT_HIDE_KEYS = new Set([
+  "登録ID",
+  "顧客コード",
+  "顧客名称",
+  "姓",
+  "名",
+  "セイ",
+  "メイ",
+  "性別",
+  "職種",
+  "部署",
+  "publicKey",
+  "customerKey",
+  "customer",
+  "採寸方法",
+  "上衣入力済",
+  "下衣入力済",
+  "登録日時",
+  "更新日時",
+  "登録番号",
+  "登録区分",
+  "有効フラグ",
+  "修正用番号",
+  "employeeNo",
+  "staffNo",
+  "measurementNo",
+  "registrationNo",
+  "entryType",
+  "activeFlag",
+  "contactPin"
+]);
+
+const MEASUREMENT_UNIT_MAP = {
+  "身長": "cm",
+  "体重": "kg",
+  "A_衿回り": "cm",
+  "B_肩巾": "cm",
+  "C1_袖丈_半袖": "cm",
+  "C2_袖丈_七分袖": "cm",
+  "C3_袖丈_長袖": "cm",
+  "D_胸回り": "cm",
+  "E_胴回り": "cm",
+  "F_腰回り": "cm",
+  "G_背丈": "cm",
+  "H_着丈": "cm",
+  "I_袖付回り": "cm",
+  "e_胴回り": "cm",
+  "f_腰回り": "cm",
+  "J_股上": "cm",
+  "K_股下": "cm",
+  "L_総丈": "cm",
+  "M_太股回り": "cm"
+};
+
+function hasDisplayValue(value) {
+  return value !== null && value !== undefined && String(value).trim() !== "";
+}
+
+function formatMeasurementValue(key, value) {
+  const text = String(value ?? "").trim();
+  if (!text) return "";
+  const unit = MEASUREMENT_UNIT_MAP[key] || "";
+  if (!unit) return text;
+  if (text.endsWith(unit)) return text;
+  return text + unit;
+}
+
+function hasBespokeOrder(orders) {
+  return (orders || []).some(o => {
+    const size = String(o.size || o["サイズ"] || "").trim();
+    const sizeType = String(o.sizeType || o["サイズ区分"] || "").trim();
+    return size === "別寸" || sizeType === "bespoke";
+  });
+}
+
+function renderMeasurement(measurement, orders) {
+  const section = document.getElementById("measurementSection");
+  const area = document.getElementById("measurementContent");
+  const hasBespoke = hasBespokeOrder(orders);
+
+  if (!section || !area) return;
+
+  if (!measurement) {
+    if (hasBespoke) {
+      section.classList.remove("hidden");
+      area.innerText = "採寸情報はありません";
+    } else {
+      section.classList.add("hidden");
+      area.innerHTML = "";
+    }
+    return;
+  }
+
+  const entries = Object.entries(measurement)
+    .filter(([key, value]) => !MEASUREMENT_HIDE_KEYS.has(key) && hasDisplayValue(value));
+
+  if (entries.length === 0) {
+    if (hasBespoke) {
+      section.classList.remove("hidden");
+      area.innerText = "採寸情報はありません";
+    } else {
+      section.classList.add("hidden");
+      area.innerHTML = "";
+    }
+    return;
+  }
+
+  section.classList.remove("hidden");
+  area.innerHTML = entries.map(([key, value]) =>
+    `<div>${escapeHtml(key)}：${escapeHtml(formatMeasurementValue(key, value))}</div>`
+  ).join("");
+}
+
+let privacyReviewed = false;
+let privacyFrameReady = false;
+
+function setupConfirmationAgreement() {
+  const isEdit = !!(draft && draft.editMode === true);
+  const confirmCheck = document.getElementById("confirmCheck");
+  const newText = document.getElementById("newConfirmText");
+  const editText = document.getElementById("editConfirmText");
+  const note = document.getElementById("privacyCheckNote");
+
+  confirmCheck.checked = false;
+  if (isEdit) {
+    privacyReviewed = true;
+    confirmCheck.disabled = false;
+    newText.classList.add("hidden");
+    editText.classList.remove("hidden");
+    note.classList.add("hidden");
+  } else {
+    privacyReviewed = false;
+    confirmCheck.disabled = true;
+    newText.classList.remove("hidden");
+    editText.classList.add("hidden");
+    note.classList.remove("hidden");
+    note.innerText = "プライバシーポリシーを開き、最後までスクロールして閉じるとチェックできます。";
+  }
+  updateSubmitButtonState();
+}
+
+function resetPrivacyModalState() {
+  privacyFrameReady = false;
+  const closeButton = document.getElementById("privacyCloseButton");
+  const message = document.getElementById("privacyScrollMessage");
+  closeButton.disabled = true;
+  message.innerText = "画面を閉じるには最後までスクロールしてください。";
+}
+
+function watchPrivacyFrameScroll() {
+  const frame = document.getElementById("privacyFrame");
+  try {
+    const frameWindow = frame.contentWindow;
+    const frameDocument = frame.contentDocument || frameWindow.document;
+    const checkBottom = () => {
+      const doc = frameDocument.documentElement;
+      const body = frameDocument.body;
+      const scrollTop = frameWindow.pageYOffset || doc.scrollTop || body.scrollTop || 0;
+      const clientHeight = frameWindow.innerHeight || doc.clientHeight || 0;
+      const scrollHeight = Math.max(doc.scrollHeight, body.scrollHeight, doc.offsetHeight, body.offsetHeight);
+      if (scrollTop + clientHeight >= scrollHeight - 8) {
+        privacyFrameReady = true;
+        document.getElementById("privacyCloseButton").disabled = false;
+        document.getElementById("privacyScrollMessage").innerText =
+          "確認が完了しました。";
+      }
+    };
+    frameWindow.addEventListener("scroll", checkBottom, { passive: true });
+    frameWindow.addEventListener("resize", checkBottom);
+    checkBottom();
+  } catch (error) {
+    console.error("プライバシーポリシーのスクロール確認を設定できませんでした。", error);
+  }
+}
+
+function openPrivacyModal() {
+  if (draft && draft.editMode === true) return;
+  const modal = document.getElementById("privacyModal");
+  const frame = document.getElementById("privacyFrame");
+  resetPrivacyModalState();
+  modal.classList.remove("hidden");
+  document.body.classList.add("modal-open");
+  frame.onload = watchPrivacyFrameScroll;
+  frame.src = "privacy.html?view=modal&ts=" + Date.now();
+}
+
+function closePrivacyModal() {
+  if (!privacyFrameReady) return;
+  document.getElementById("privacyModal").classList.add("hidden");
+  document.getElementById("privacyFrame").src = "about:blank";
+  document.body.classList.remove("modal-open");
+  privacyReviewed = true;
+  const confirmCheck = document.getElementById("confirmCheck");
+  confirmCheck.disabled = false;
+  document.getElementById("privacyCheckNote").innerText =
+    "プライバシーポリシーの確認が完了しました。チェックを入れてください。";
+  confirmCheck.focus();
+  updateSubmitButtonState();
+}
+
+document.getElementById("privacyOpenButton").addEventListener("click", openPrivacyModal);
+document.getElementById("privacyCloseButton").addEventListener("click", closePrivacyModal);
+document.addEventListener("keydown", event => {
+  const modal = document.getElementById("privacyModal");
+  if (event.key === "Escape" && !modal.classList.contains("hidden")) {
+    event.preventDefault();
+  }
+});
+
+/* チェックが入るまで登録不可 */
+function updateSubmitButtonState() {
+  const submitBtn = document.getElementById("submitBtn");
+  const confirmCheck = document.getElementById("confirmCheck");
+  const duplicateArea = document.getElementById("duplicateWarningArea");
+  const duplicateCheck = document.getElementById("duplicateConfirmCheck");
+  const basicConfirmed = !!(privacyReviewed && confirmCheck && !confirmCheck.disabled && confirmCheck.checked);
+  const duplicateRequired = !!(duplicateArea && !duplicateArea.classList.contains("hidden"));
+  const duplicateConfirmed = !duplicateRequired || !!(duplicateCheck && duplicateCheck.checked);
+  submitBtn.disabled = !(basicConfirmed && duplicateConfirmed) || submitInProgress;
+}
+document.getElementById("confirmCheck").addEventListener("change", updateSubmitButtonState);
+document.getElementById("duplicateConfirmCheck").addEventListener("change", updateSubmitButtonState);
+
+
+function generateMeasurementNo() {
+  const letters = "ABCDEFGHJKMNPQRSTUVWXYZ";
+  const letter = letters[Math.floor(Math.random() * letters.length)];
+  const number = String(Math.floor(Math.random() * 900000) + 100000);
+  return letter + number;
+}
+
+/* 本人確認用4桁番号の取得・確認 */
+function getRegistrationNo(isEdit) {
+  const first = draft?.orders?.[0] || {};
+  if (isEdit) {
+    return String(
+      draft?.registrationNo ||
+      draft?.["登録番号"] ||
+      first["登録番号"] ||
+      first.registrationNo ||
+      ""
+    ).trim();
+  }
+  return String(document.getElementById("pin")?.value || "").trim();
+}
+
+function validatePin(isEdit) {
+  const pin = getRegistrationNo(isEdit);
+  if (!/^\d{4}$/.test(pin)) {
+    alert(isEdit
+      ? "初回登録時の本人確認用4桁番号を取得できませんでした。もう一度検索からやり直してください。"
+      : "4桁の数字を入力してください。"
+    );
+    return false;
+  }
+  if (!isEdit && /^(\d)\1{3}$/.test(pin)) {
+    alert("同じ数字4つは使用できません。");
+    return false;
+  }
+  return true;
+}
+
+function renderRosterCheckResult() {
+  const resultArea = document.getElementById("rosterResultArea");
+  const resultMessage = document.getElementById("rosterResultMessage");
+  const duplicateArea = document.getElementById("duplicateWarningArea");
+  const duplicateCheck = document.getElementById("duplicateConfirmCheck");
+  const reviseLink = document.getElementById("duplicateReviseLink");
+
+  if (duplicateArea) duplicateArea.classList.add("hidden");
+  if (resultArea) resultArea.classList.add("hidden");
+  if (duplicateCheck) duplicateCheck.checked = false;
+  if (resultMessage) resultMessage.innerText = "";
+
+  // 修正時は名簿・重複チェックを行わない
+  if (!draft || draft.editMode === true) {
+    updateSubmitButtonState();
+    return;
+  }
+
+  const rosterCheck = draft.rosterCheck || null;
+  if (!rosterCheck || rosterCheck.result !== "ok") {
+    if (resultArea && resultMessage) {
+      resultArea.classList.remove("hidden");
+      resultMessage.innerText =
+        "名簿確認結果を取得できませんでした。入力画面へ戻ってやり直してください。";
+    }
+    updateSubmitButtonState();
+    return;
+  }
+
+  const matchType = String(rosterCheck.rosterMatchType || "");
+  const duplicateFound = rosterCheck.duplicateFound === true;
+  const requiresConfirmation = rosterCheck.requiresConfirmation === true;
+
+  // 登録済みデータとの重複確認は、名簿一致結果とは別軸で判定する
+  if (duplicateFound || requiresConfirmation) {
+    if (duplicateArea) {
+      duplicateArea.classList.remove("hidden");
+    }
+    if (reviseLink) {
+      reviseLink.href =
+        "revise.html?customer=" + encodeURIComponent(getCustomerKey());
+    }
+    updateSubmitButtonState();
+    return;
+  }
+
+  let message = "";
+  if (matchType === "name_only") {
+    message =
+      "名簿と氏名は一致しましたが、シメイに差異があります。入力内容をご確認ください。";
+  } else if (matchType === "kana_only") {
+    message =
+      "名簿とシメイは一致しましたが、氏名に差異があります。入力内容をご確認ください。";
+  } else if (matchType === "none") {
+    message =
+      "一致する名簿はありませんでした。新規登録として処理します。";
+  }
+
+  if (message && resultArea && resultMessage) {
+    resultArea.classList.remove("hidden");
+    resultMessage.innerText = message;
+  }
+
+  updateSubmitButtonState();
+}
+
+let submitInProgress = false;
+let sendingAnimationTimer = null;
+
+function startSendingAnimation() {
+  const dots = document.getElementById("sendingDots");
+  let dotCount = 1;
+  if (sendingAnimationTimer) clearInterval(sendingAnimationTimer);
+  dots.innerText = ".";
+  sendingAnimationTimer = setInterval(() => {
+    dotCount = dotCount >= 3 ? 1 : dotCount + 1;
+    dots.innerText = ".".repeat(dotCount);
+  }, 500);
+}
+function stopSendingAnimation() {
+  if (sendingAnimationTimer) {
+    clearInterval(sendingAnimationTimer);
+    sendingAnimationTimer = null;
+  }
+}
+function lockSubmitButton(isEdit) {
+  submitInProgress = true;
+  document.getElementById("submitBtn").disabled = true;
+  const returnButton = document.getElementById("returnToInputButton");
+  returnButton.disabled = true;
+  returnButton.classList.add("hidden");
+  document.getElementById("confirmCheck").disabled = true;
+  document.getElementById("duplicateConfirmCheck").disabled = true;
+  document.getElementById("sendingOverlay").classList.remove("hidden");
+  document.body.classList.add("sending-locked");
+  startSendingAnimation();
+}
+function resetSubmitButton(isEdit) {
+  submitInProgress = false;
+  stopSendingAnimation();
+  document.getElementById("sendingOverlay").classList.add("hidden");
+  document.body.classList.remove("sending-locked");
+  const returnButton = document.getElementById("returnToInputButton");
+  returnButton.disabled = false;
+  returnButton.classList.remove("hidden");
+  document.getElementById("duplicateConfirmCheck").disabled = false;
+  const confirmCheck = document.getElementById("confirmCheck");
+  confirmCheck.disabled = !(draft && draft.editMode === true) && !privacyReviewed;
+  const submitBtn = document.getElementById("submitBtn");
+  submitBtn.innerText = isEdit ? "修正内容を登録する" : "登録する";
+  updateSubmitButtonState();
+}
+
+function normalizePayloadForPowerAutomate(payload){
+
+  const orders = payload.orders || [];
+
+  orders.forEach(o => {
+
+    o["顧客コード"] = o["顧客コード"] || o.customerCode || "";
+    o["顧客名称"] = o["顧客名称"] || o.customerName || "";
+
+    o["職員番号"] =
+      o["職員番号"] ||
+      o.employeeNo ||
+      o.staffNo ||
+      "";
+
+    o["姓"] =
+      o["姓"] ||
+      o.sei ||
+      o["姓"] ||
+      "";
+
+    o["名"] =
+      o["名"] ||
+      o.mei ||
+      "";
+
+    o["セイ"] =
+      o["セイ"] ||
+      o.seiKana ||
+      o["セイ"] ||
+      "";
+
+    o["メイ"] =
+      o["メイ"] ||
+      o.meiKana ||
+      o["メイ"] ||
+      "";
+
+    o["性別"] = o["性別"] || o.gender || "";
+    o["職種"] = o["職種"] || o.job || "";
+    o["部署"] = o["部署"] || o.department || "";
+    o["貸与パターンコード"] = o["貸与パターンコード"] || "";
+    o["貸与パターン名"] = o["貸与パターン名"] || "";
+
+    o["股下加工可能"] =
+      o["股下加工可能"] === undefined || o["股下加工可能"] === ""
+        ? 0
+        : Number(o["股下加工可能"]);
+
+    o["股下cm"] =
+      o["股下cm"] === undefined
+        ? ""
+        : o["股下cm"];
+    o["股下モード"] = o["股下モード"] || o.inseamMode || "";
+
+    o["有効フラグ"] =
+      o["有効フラグ"] === undefined || o["有効フラグ"] === ""
+        ? 1
+        : Number(o["有効フラグ"]);
+
+  });
+
+  if(payload.measurement){
+
+    const m = payload.measurement;
+
+    m["顧客コード"] = m["顧客コード"] || m.customerCode || "";
+    m["顧客名称"] = m["顧客名称"] || m.customerName || "";
+
+    m["職員番号"] =
+      m["職員番号"] ||
+      m.employeeNo ||
+      m.staffNo ||
+      "";
+
+    m["姓"] =
+      m["姓"] ||
+      m.sei ||
+      m["姓"] ||
+      "";
+
+    m["名"] =
+      m["名"] ||
+      m.mei ||
+      "";
+
+    m["セイ"] =
+      m["セイ"] ||
+      m.seiKana ||
+      m["セイ"] ||
+      "";
+
+    m["メイ"] =
+      m["メイ"] ||
+      m.meiKana ||
+      m["メイ"] ||
+      "";
+
+    m["性別"] = m["性別"] || m.gender || "";
+    m["職種"] = m["職種"] || m.job || "";
+    m["部署"] = m["部署"] || m.department || "";
+
+    const measurementType = String(m["採寸区分"] || "").trim();
+
+    const upperFlag =
+      m["上衣入力済"] === true ||
+      m["上衣入力済"] === 1 ||
+      String(m["上衣入力済"]).toUpperCase() === "TRUE" ||
+      String(m["上衣入力済"]).trim() === "1" ||
+      measurementType === "上衣" ||
+      measurementType === "全身";
+
+    const lowerFlag =
+      m["下衣入力済"] === true ||
+      m["下衣入力済"] === 1 ||
+      String(m["下衣入力済"]).toUpperCase() === "TRUE" ||
+      String(m["下衣入力済"]).trim() === "1" ||
+      measurementType === "下衣" ||
+      measurementType === "全身";
+
+    m["上衣入力済"] = upperFlag ? 1 : 0;
+    m["下衣入力済"] = lowerFlag ? 1 : 0;
+
+    m["有効フラグ"] =
+      m["有効フラグ"] === undefined || m["有効フラグ"] === ""
+        ? 1
+        : Number(m["有効フラグ"]);
+
+  }
+
+  return payload;
+}
+
+document.getElementById("submitBtn").addEventListener("click", async () => {
+  if (submitInProgress) {
+    return;
+  }
+
+  const submitBtn = document.getElementById("submitBtn");
+  const isEdit = draft && draft.editMode === true;
+
+  // 二重押し防止のため、登録前チェックより先に即時ロックする
+  lockSubmitButton(isEdit);
+
+  try {
+    const available = await checkPageDeadline();
+    if (!available) return;
+  } catch (err) {
+    console.error("登録前のHP公開期限チェックに失敗しました。", err);
+    location.replace("expired.html");
+    return;
+  }
+
+  if (!validatePin(isEdit)) {
+    resetSubmitButton(isEdit);
+    return;
+  }
+
+const duplicateArea = document.getElementById("duplicateWarningArea");
+  const duplicateCheck = document.getElementById("duplicateConfirmCheck");
+  const duplicateAlreadyConfirmed =
+    duplicateArea &&
+    !duplicateArea.classList.contains("hidden") &&
+    duplicateCheck &&
+    duplicateCheck.checked;
+  const registrationNo = getRegistrationNo(isEdit);
+
+  const measurementNo = isEdit
+    ? draft.measureNo
+    : generateMeasurementNo();
+
+  const registrationType = isEdit
+    ? "修正"
+    : "新規";
+  if (isEdit && !measurementNo) {
+    alert("修正対象の採寸番号が取得できません。もう一度検索からやり直してください。");
+    resetSubmitButton(isEdit);
+    return;
+  }
+
+  const payload = JSON.parse(JSON.stringify(draft));
+  const customerKey = getCustomerKey();
+  payload.publicKey = customerKey;
+  payload.customerKey = customerKey;
+  payload.customer = customerKey;
+
+
+  payload["採寸番号"] = measurementNo;
+  payload["登録番号"] = registrationNo;
+  payload["登録区分"] = registrationType;
+  payload["有効フラグ"] = 1;
+
+  payload.editMode = isEdit;
+  payload.measureNo = measurementNo;
+  payload.registrationType = registrationType;
+
+  // Power Automate送信用の共通項目
+  payload.measurementNo = measurementNo;
+  payload.registrationNo = registrationNo;
+  payload.entryType = registrationType;
+  payload.activeFlag = 1;
+  payload.contactPin = registrationNo;
+const rosterCheck = payload.rosterCheck || {};
+const rosterMatchType = String(rosterCheck.rosterMatchType || "");
+let rosterMismatchInfo = "";
+if (!isEdit) {
+  if (rosterMatchType === "complete" && duplicateAlreadyConfirmed) rosterMismatchInfo = "同姓同名同音あり（確認後登録）";
+  else rosterMismatchInfo = String(rosterCheck.rosterMismatchInfo || "");
+}
+payload.overrideDuplicate = duplicateAlreadyConfirmed;
+payload.rosterMatchType = isEdit ? "revision_skip" : rosterMatchType;
+payload.rosterMismatchInfo = rosterMismatchInfo;
+payload.rosterCheckSkipped = isEdit;
+
+
+  payload.orders?.forEach(o => {
+  o["採寸番号"] = measurementNo;
+  o["登録番号"] = registrationNo;
+  o["登録区分"] = registrationType;
+  o["有効フラグ"] = 1;
+
+  o.measurementNo = measurementNo;
+  o.registrationNo = registrationNo;
+  o.entryType = registrationType;
+  o.activeFlag = 1;
+  o.contactPin = registrationNo;
+  o.publicKey = customerKey;
+  o.customerKey = customerKey;
+  o.customer = customerKey;
+
+  o.overrideDuplicate = duplicateAlreadyConfirmed;
+  o.rosterMatchType = payload.rosterMatchType;
+  o.rosterMismatchInfo = rosterMismatchInfo;
+});
+
+  if (payload.measurement) {
+    payload.measurement["採寸番号"] = measurementNo;
+    payload.measurement["登録番号"] = registrationNo;
+    payload.measurement["登録区分"] = registrationType;
+    payload.measurement["有効フラグ"] = 1;
+
+    // Power Automate送信用の共通項目
+    payload.measurement["修正用番号"] = registrationNo;
+    payload.measurement.measurementNo = measurementNo;
+    payload.measurement.registrationNo = registrationNo;
+    payload.measurement.entryType = registrationType;
+    payload.measurement.activeFlag = 1;
+    payload.measurement.contactPin = registrationNo;
+    payload.measurement.publicKey = customerKey;
+    payload.measurement.customerKey = customerKey;
+    payload.measurement.customer = customerKey;
+    payload.measurement.employeeNo = payload.measurement.employeeNo || payload.measurement.staffNo || payload.measurement["職員番号"] || payload.employeeNo || "";
+    payload.measurement.staffNo = payload.measurement.employeeNo;
+    payload.measurement["職員番号"] = payload.measurement.employeeNo;
+    payload.measurement.rosterMatchType = payload.rosterMatchType;
+    payload.measurement.rosterMismatchInfo = rosterMismatchInfo;
+  }
+
+if (!payload.measurement) {
+  delete payload.measurement;
+}
+
+normalizePayloadForPowerAutomate(payload);
+
+  try {
+    const res = await fetch(FLOW_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+   const text = await res.text();
+
+    if (!res.ok) {
+      let errorMessage = "登録に失敗しました。時間をおいて再度お試しください。";
+      try {
+        const errorJson = JSON.parse(text);
+        if (errorJson.errorCode === "duplicate_registration_no") {
+          errorMessage =
+            "その4桁番号は同じ登録者で既に使用中です。\n" +
+            "別の番号を入力してください。";
+        } else if (errorJson.message) {
+          errorMessage = errorJson.message;
+        }
+      } catch {
+        if (text) errorMessage += "\n" + text;
+      }
+      alert(errorMessage);
+      resetSubmitButton(isEdit);
+      return;
+    }
+
+    confirmRegistrationCompleted = true;
+    sessionStorage.setItem("uniformComplete", JSON.stringify({
+      measureNo: measurementNo,
+      registrationNo: registrationNo,
+      editMode: isEdit,
+      registrationType: registrationType,
+      customerKey: customerKey
+    }));
+
+    sessionStorage.setItem("uniformMailDraft", JSON.stringify(payload));
+
+    sessionStorage.removeItem("uniformDraft");
+    sessionStorage.removeItem("uniformConfirmPin");
+
+    if (isEdit) {
+      sessionStorage.removeItem("uniformEditData");
+      sessionStorage.removeItem("uniformEditCustomer");
+    }
+
+    location.href = "complete.html";
+
+  } catch (err) {
+    alert("登録送信中にエラーが発生しました。\n通信環境を確認して、再度お試しください。\n\n" + err.message);
+
+    resetSubmitButton(isEdit);
+  }
+});
+
+
+async function initializeConfirmPage() {
+  try {
+    const available = await checkPageDeadline();
+    if (!available) return;
+    loadDraft();
+  } catch (err) {
+    console.error("HP公開期限チェックに失敗しました。", err);
+    location.replace("expired.html");
+  }
+}
+
+initializeConfirmPage();
+</script>
+</body>
+</html>
