@@ -1455,37 +1455,77 @@ function escapeRosterText(value) {
   return String(value ?? "").replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[char]);
 }
 function applyRosterCandidate(candidate) {
-  const group = String(candidate.lendingGroup ?? "").trim();
-  currentLendingGroup = group;
+  if (!candidate) return;
 
-  const department = String(candidate.department ?? "").trim();
+  const rosterGender = String(candidate.gender ?? "").trim();
+  const rosterJob = String(candidate.job ?? "").trim();
+  const rosterDepartment = String(candidate.department ?? "").trim();
+  const rosterLendingGroup = String(candidate.lendingGroup ?? "").trim();
+
+  const genderSelect = document.getElementById("gender");
+  const jobSelect = document.getElementById("job");
   const departmentSelect = document.getElementById("department");
-  if (departmentSelect && isDepartmentActive()) {
-    updateDepartmentOptions();
-    addMissingOption(departmentSelect, department);
-    departmentSelect.value = department;
-  }
 
   clearCurrentProductSelection(false);
   lastAcceptedLendingPatternCode = "";
+  currentLendingGroup = null;
+
+  if (genderSelect && rosterGender) {
+    addMissingOption(genderSelect, rosterGender);
+    genderSelect.value = rosterGender;
+  }
+
+  updateJobOptions();
+
+  if (jobSelect && rosterJob) {
+    addMissingOption(jobSelect, rosterJob);
+    jobSelect.value = rosterJob;
+  }
+
+  updateDepartmentOptions();
+
+  if (departmentSelect && isDepartmentActive()) {
+    if (rosterDepartment) {
+      addMissingOption(departmentSelect, rosterDepartment);
+      departmentSelect.value = rosterDepartment;
+    } else {
+      departmentSelect.value = "";
+    }
+  }
+
+  currentLendingGroup = rosterLendingGroup;
+
   const hasPatterns = updateLendingPatternOptions();
+
   if (hasPatterns) {
     document.getElementById("table").innerHTML =
       "<tr><td colspan='7'>貸与パターンを選択してください</td></tr>";
+
     document.getElementById("categoryStatus").innerHTML = "";
     document.getElementById("limitDeclarationArea").innerHTML = "";
-  } else {
-    const jobData = getSelectedJobBaseData();
-    const allPatterns = jobData && Array.isArray(jobData.lendingPatterns) ? jobData.lendingPatterns : [];
-    if (allPatterns.length > 0) {
-      document.getElementById("table").innerHTML =
-        "<tr><td colspan='7'>名簿の貸与グループに対応する貸与パターンがありません</td></tr>";
-      document.getElementById("categoryStatus").innerHTML = "";
-      document.getElementById("limitDeclarationArea").innerHTML = "";
-    } else {
-      createTable(currentData, document.getElementById("job").value, document.getElementById("gender").value);
-    }
+    return;
   }
+
+  const jobData = getSelectedJobBaseData();
+  const allPatterns =
+    jobData && Array.isArray(jobData.lendingPatterns)
+      ? jobData.lendingPatterns
+      : [];
+
+  if (allPatterns.length > 0) {
+    document.getElementById("table").innerHTML =
+      "<tr><td colspan='7'>名簿の貸与グループに対応する貸与パターンがありません</td></tr>";
+
+    document.getElementById("categoryStatus").innerHTML = "";
+    document.getElementById("limitDeclarationArea").innerHTML = "";
+    return;
+  }
+
+  createTable(
+    currentData,
+    jobSelect ? jobSelect.value : "",
+    genderSelect ? genderSelect.value : ""
+  );
 }
 function renderRosterSearchResponse(json) {
   const area = document.getElementById("rosterSearchResult");
