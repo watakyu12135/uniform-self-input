@@ -1458,6 +1458,60 @@ function setupBasicInfoVisibility() {
 }
 
 function searchRoster() {
+  if (!currentData) {
+    alert("設定データを読み込み中のため、まだ名簿検索を実行できません。しばらく待ってからもう一度お試しください。");
+    return;
+  }
+
+  if (!isBasicInfoActive("名簿検索")) {
+    alert("このお客様では名簿検索を利用できません。");
+    return;
+  }
+
+  const employeeNoInput = document.getElementById("employeeNo");
+  const employeeNo = employeeNoInput ? employeeNoInput.value.trim() : "";
+  const sei = document.getElementById("sei").value.trim();
+  const mei = document.getElementById("mei").value.trim();
+  const seiKana = document.getElementById("seiKana").value.trim();
+  const meiKana = document.getElementById("meiKana").value.trim();
+  const gender = document.getElementById("gender").value;
+  const job = document.getElementById("job").value;
+  const errors = [];
+
+  if (!sei) errors.push("姓を入力してください。");
+  if (!mei) errors.push("名を入力してください。");
+
+  if (sei && !isFullWidthText(sei)) {
+    errors.push("姓は全角で入力してください。");
+  }
+  if (mei && !isFullWidthText(mei)) {
+    errors.push("名は全角で入力してください。");
+  }
+
+  if (!gender) errors.push("性別を選択してください。");
+  if (!job) errors.push("職種を選択してください。");
+
+  if (employeeNo) {
+    if (!validateEmployeeNoValue(employeeNo)) {
+      errors.push("職員番号は半角英数字で入力してください。");
+    }
+  } else {
+    if (!seiKana) errors.push("セイを入力してください。");
+    if (!meiKana) errors.push("メイを入力してください。");
+
+    if (seiKana && !isFullWidthKatakana(seiKana)) {
+      errors.push("セイは全角カタカナで入力してください。");
+    }
+    if (meiKana && !isFullWidthKatakana(meiKana)) {
+      errors.push("メイは全角カタカナで入力してください。");
+    }
+  }
+
+  if (errors.length > 0) {
+    alert("名簿検索を実行できません。\n\n" + errors.join("\n"));
+    return;
+  }
+
   alert("PAは現在開発中です");
 }
 function normalizeEmployeeNoInput(input) {
