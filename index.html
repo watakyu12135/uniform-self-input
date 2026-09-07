@@ -1495,6 +1495,19 @@ function resetRosterSearchForInputChange() {
 function applyRosterCandidate(candidate) {
   if (!candidate) return;
   rosterSearchCompleted = true;
+
+  const employeeNoInput = document.getElementById("employeeNo");
+  const enteredEmployeeNo = employeeNoInput
+    ? String(employeeNoInput.value || "").trim()
+    : "";
+  const rosterEmployeeNo = String(candidate.employeeNo ?? "").trim();
+
+  // 職員番号を空欄で検索した場合だけ、名簿の職員番号を画面へ補完する。
+  // 職員番号を入力して検索した場合は、PA側で整合確認済みのため上書きしない。
+  if (employeeNoInput && enteredEmployeeNo === "" && rosterEmployeeNo !== "") {
+    employeeNoInput.value = rosterEmployeeNo;
+  }
+
   const inputJob = String(document.getElementById("job").value || "").trim();
   const rosterJob = String(candidate.job ?? "").trim();
   if (!rosterJob || rosterJob !== inputJob) {
@@ -3712,11 +3725,11 @@ async function submitData(event) {
     ? document.getElementById("employeeNo").value.trim()
     : "";
   if (isEmployeeNoActive()) {
-    if (!employeeNo) {
+    if (!employeeNo && !isRosterSearchEnabled()) {
       alert("職員番号を入力してください");
       return;
     }
-    if (!validateEmployeeNoValue(employeeNo)) {
+    if (employeeNo && !validateEmployeeNoValue(employeeNo)) {
       alert("職員番号は半角英数字で入力してください");
       return;
     }
