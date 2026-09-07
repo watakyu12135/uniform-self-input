@@ -79,6 +79,32 @@ button {
   font-size: 16px;
 }
 
+/* 名簿検索 */
+.roster-search-area {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  max-width: 520px;
+  margin: -6px 0 18px;
+}
+.roster-search-button {
+  margin-top: 0;
+  padding: 9px 18px;
+  border: 1px solid #2f6fb2;
+  border-radius: 6px;
+  background: #4a90e2;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.roster-search-button:hover,
+.roster-search-button:focus-visible {
+  background: #3478c2;
+  outline: 3px solid rgba(74, 144, 226, 0.25);
+}
+
+
 /* 貸与枚数 */
 #categoryStatus {
   margin-top: 15px;
@@ -643,6 +669,16 @@ tr.inseam-row .cell-inseam { display: block !important; margin: 0; padding: 0; b
   box-sizing: border-box;
 }
 
+  .roster-search-area {
+    width: 100%;
+    max-width: none;
+    margin-top: -4px;
+  }
+  .roster-search-button {
+    width: 100%;
+  }
+
+
   .measure-inline:not(.hidden) {
     display: inline-block;
     margin-top: 6px;
@@ -988,6 +1024,10 @@ tr.inseam-row .cell-inseam { display: block !important; margin: 0; padding: 0; b
       </div>
     </div>
 
+
+    <div id="rosterSearchArea" class="roster-search-area hidden">
+      <button type="button" id="rosterSearchButton" class="roster-search-button" onclick="searchRoster()">名簿検索</button>
+    </div>
     <div class="basic-select-field">
       <label for="gender">性別</label>
       <select id="gender" onchange="changeGender()">
@@ -1378,6 +1418,10 @@ function changeLendingPattern(event = null) {
   lastAcceptedLendingPatternCode = newCode;
 }
 function setupBasicInfoVisibility() {
+  const rosterSearchArea = document.getElementById("rosterSearchArea");
+  if (rosterSearchArea) {
+    rosterSearchArea.classList.toggle("hidden", !isBasicInfoActive("名簿検索"));
+  }
   const employeeArea = document.getElementById("employeeNoArea");
   const employeeInput = document.getElementById("employeeNo");
 
@@ -1413,6 +1457,9 @@ function setupBasicInfoVisibility() {
   }
 }
 
+function searchRoster() {
+  alert("PAは現在開発中です");
+}
 function normalizeEmployeeNoInput(input) {
   if (!input) return;
   input.value = String(input.value || "").replace(/[^A-Za-z0-9]/g, "");
