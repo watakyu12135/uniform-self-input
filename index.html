@@ -80,16 +80,16 @@ button {
 }
 
 /* 名簿検索 */
-.roster-search-area { max-width:520px; margin:-6px 0 18px; }
+.roster-search-area { max-width:520px; margin:0 0 20px; }
 .roster-search-button { margin-top:0; padding:9px 18px; border:1px solid #2f6fb2; border-radius:6px; background:#4a90e2; color:#fff; font-size:15px; font-weight:700; cursor:pointer; }
 .roster-search-button:disabled { background:#9aa8b6; border-color:#9aa8b6; cursor:wait; }
-.roster-search-result { margin-top:10px; padding:10px 12px; border-radius:6px; line-height:1.6; }
+.roster-search-result { margin-top:10px; padding:10px 12px; border-radius:6px; line-height:1.6; white-space:pre-line; }
 .roster-search-result:empty { display:none; }
 .roster-search-result.info { border:1px solid #8cb9e8; background:#eef6ff; color:#173d63; }
 .roster-search-result.success { border:1px solid #6fb27a; background:#effaf1; color:#205c2b; }
 .roster-search-result.warning { border:1px solid #e1a63a; background:#fff8e8; color:#684500; }
 .roster-search-result.error { border:1px solid #d76a6a; background:#fff1f1; color:#8b1616; }
-.roster-candidate { display:block; margin-top:8px; padding:10px; border:1px solid #b8c8d8; border-radius:6px; background:#fff; color:#222; cursor:pointer; }
+.roster-candidate { display:block; margin-top:8px; padding:10px; border:1px solid #b8c8d8; border-radius:6px; background:#fff; color:#222; cursor:pointer; white-space:normal; }
 .roster-candidate input { width:auto; margin-right:8px; }
 
 /* 貸与枚数 */
@@ -1003,10 +1003,6 @@ tr.inseam-row .cell-inseam { display: block !important; margin: 0; padding: 0; b
       </div>
     </div>
 
-    <div id="rosterSearchArea" class="roster-search-area hidden">
-      <button type="button" id="rosterSearchButton" class="roster-search-button" onclick="searchRoster()">名簿検索</button>
-      <div id="rosterSearchResult" class="roster-search-result" role="status" aria-live="polite"></div>
-    </div>
     <div class="basic-select-field">
       <label for="gender">性別</label>
       <select id="gender" onchange="changeGender()">
@@ -1028,6 +1024,10 @@ tr.inseam-row .cell-inseam { display: block !important; margin: 0; padding: 0; b
       <select id="department">
         <option value="">選択</option>
       </select>
+    </div>
+    <div id="rosterSearchArea" class="roster-search-area hidden">
+      <button type="button" id="rosterSearchButton" class="roster-search-button" onclick="searchRoster()">名簿検索</button>
+      <div id="rosterSearchResult" class="roster-search-result" role="status" aria-live="polite"></div>
     </div>
     <div id="lendingPatternArea" class="basic-select-field pattern-field hidden">
       <label>貸与パターン</label>
@@ -1265,7 +1265,7 @@ let editMeasureNo = "";
 let originalRegistrationNo = "";
 let lastAcceptedLendingPatternCode = "";
 let lendingPatternChangeInProgress = false;
-let currentLendingGroup = null; // nullは未絞り込み、空文字は標準グループ
+let currentLendingGroup = null; // null: 未絞り込み、空文字: 標準グループ
 /* ======================== */
 
 function getBasicInfoSetting(name) {
@@ -1409,7 +1409,9 @@ function changeLendingPattern(event = null) {
 }
 function setupBasicInfoVisibility() {
   const rosterSearchArea = document.getElementById("rosterSearchArea");
-  if (rosterSearchArea) rosterSearchArea.classList.toggle("hidden", !isBasicInfoActive("名簿検索"));
+  if (rosterSearchArea) {
+    rosterSearchArea.classList.toggle("hidden", !isBasicInfoActive("名簿検索"));
+  }
   const employeeArea = document.getElementById("employeeNoArea");
   const employeeInput = document.getElementById("employeeNo");
 
@@ -1450,110 +1452,95 @@ function setRosterSearchResult(message, type = "info") {
   if (!area) return;
   area.className = "roster-search-result " + type;
   area.textContent = message;
+  area._candidates = [];
 }
 function escapeRosterText(value) {
   return String(value ?? "").replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[char]);
 }
+function clearRosterAppliedState() {
+  currentLendingGroup = null;
+  lastAcceptedLendingPatternCode = "";
+  clearCurrentProductSelection(false);
+}
 function applyRosterCandidate(candidate) {
   if (!candidate) return;
-
-  const rosterGender = String(candidate.gender ?? "").trim();
+  const inputJob = String(document.getElementById("job").value || "").trim();
   const rosterJob = String(candidate.job ?? "").trim();
-  const rosterDepartment = String(candidate.department ?? "").trim();
-  const rosterLendingGroup = String(candidate.lendingGroup ?? "").trim();
-
-  const genderSelect = document.getElementById("gender");
-  const jobSelect = document.getElementById("job");
+  if (!rosterJob || rosterJob !== inputJob) {
+    clearRosterAppliedState();
+    setRosterSearchResult("職種を確認し、選択し直してから再度「名簿検索」を押してください。", "error");
+    return;
+  }
+  const rosterGender = String(candidate.gender ?? "").trim();
+  const inputGender = String(document.getElementById("gender").value || "").trim();
+  if (rosterGender && inputGender && rosterGender !== inputGender) {
+    clearRosterAppliedState();
+    setRosterSearchResult("性別を確認し、選択し直してから再度「名簿検索」を押してください。", "error");
+    return;
+  }
+  clearRosterAppliedState();
+  currentLendingGroup = String(candidate.lendingGroup ?? "").trim();
+  const department = String(candidate.department ?? "").trim();
   const departmentSelect = document.getElementById("department");
-
-  clearCurrentProductSelection(false);
-  lastAcceptedLendingPatternCode = "";
-  currentLendingGroup = null;
-
-  if (genderSelect && rosterGender) {
-    addMissingOption(genderSelect, rosterGender);
-    genderSelect.value = rosterGender;
-  }
-
-  updateJobOptions();
-
-  if (jobSelect && rosterJob) {
-    addMissingOption(jobSelect, rosterJob);
-    jobSelect.value = rosterJob;
-  }
-
-  updateDepartmentOptions();
-
   if (departmentSelect && isDepartmentActive()) {
-    if (rosterDepartment) {
-      addMissingOption(departmentSelect, rosterDepartment);
-      departmentSelect.value = rosterDepartment;
-    } else {
-      departmentSelect.value = "";
-    }
+    updateDepartmentOptions();
+    if (department) addMissingOption(departmentSelect, department);
+    departmentSelect.value = department;
   }
-
-  currentLendingGroup = rosterLendingGroup;
-
   const hasPatterns = updateLendingPatternOptions();
-
   if (hasPatterns) {
-    document.getElementById("table").innerHTML =
-      "<tr><td colspan='7'>貸与パターンを選択してください</td></tr>";
-
+    document.getElementById("table").innerHTML = "<tr><td colspan='7'>貸与パターンを選択してください</td></tr>";
     document.getElementById("categoryStatus").innerHTML = "";
     document.getElementById("limitDeclarationArea").innerHTML = "";
     return;
   }
-
   const jobData = getSelectedJobBaseData();
-  const allPatterns =
-    jobData && Array.isArray(jobData.lendingPatterns)
-      ? jobData.lendingPatterns
-      : [];
-
+  const allPatterns = jobData && Array.isArray(jobData.lendingPatterns) ? jobData.lendingPatterns : [];
   if (allPatterns.length > 0) {
-    document.getElementById("table").innerHTML =
-      "<tr><td colspan='7'>名簿の貸与グループに対応する貸与パターンがありません</td></tr>";
-
+    document.getElementById("table").innerHTML = "<tr><td colspan='7'>名簿の貸与グループに対応する貸与パターンがありません</td></tr>";
     document.getElementById("categoryStatus").innerHTML = "";
     document.getElementById("limitDeclarationArea").innerHTML = "";
     return;
   }
-
-  createTable(
-    currentData,
-    jobSelect ? jobSelect.value : "",
-    genderSelect ? genderSelect.value : ""
-  );
+  createTable(currentData, inputJob, inputGender);
 }
 function renderRosterSearchResponse(json) {
   const area = document.getElementById("rosterSearchResult");
   if (!area) return;
-  const candidates = Array.isArray(json.candidates) ? json.candidates : [];
-  const foundCount = Number(json.foundCount ?? candidates.length) || 0;
-  if (json.result !== "ok") { setRosterSearchResult(json.message || "名簿検索に失敗しました。", "error"); return; }
-  if (foundCount === 0) {
-    currentLendingGroup = null;
+  const allCandidates = Array.isArray(json.candidates) ? json.candidates : [];
+  if (json.result !== "ok") {
+    clearRosterAppliedState();
+    setRosterSearchResult(json.message || "名簿検索に失敗しました。", "error");
+    return;
+  }
+  const inputJob = String(document.getElementById("job").value || "").trim();
+  const matchedCandidates = allCandidates.filter(candidate => String(candidate.job ?? "").trim() === inputJob);
+  if (allCandidates.length > 0 && matchedCandidates.length === 0) {
+    clearRosterAppliedState();
+    setRosterSearchResult("職種を確認し、選択し直してから再度「名簿検索」を押してください。", "error");
+    return;
+  }
+  if (allCandidates.length === 0) {
+    clearRosterAppliedState();
     updateLendingPatternOptions();
     setRosterSearchResult("名簿に一致する登録はありませんでした。該当職種の貸与パターンから選択してください。", "warning");
     return;
   }
   area.className = "roster-search-result success";
-  if (foundCount === 1) {
-    const c = candidates[0];
-    const label = String(c.lendingGroup ?? "").trim() || "標準";
-    area.innerHTML = `<strong>名簿検索結果：1件</strong><div class="roster-candidate">姓名：${escapeRosterText(c.fullName)}<br>セイメイ：${escapeRosterText(c.fullNameKana)}<br>職種：${escapeRosterText(c.job)}<br>部署：${escapeRosterText(c.department)}<br>貸与グループ：${escapeRosterText(label)}</div>`;
+  if (matchedCandidates.length === 1) {
+    const c = matchedCandidates[0];
+    const groupLabel = String(c.lendingGroup ?? "").trim() || "標準";
+    area.innerHTML = `<strong>名簿検索結果：1件</strong><div class="roster-candidate">姓名：${escapeRosterText(c.fullName)}<br>セイメイ：${escapeRosterText(c.fullNameKana)}<br>職種：${escapeRosterText(c.job)}<br>部署：${escapeRosterText(c.department)}<br>貸与グループ：${escapeRosterText(groupLabel)}</div>`;
     applyRosterCandidate(c);
     return;
   }
-  let html = `<strong>名簿検索結果：${foundCount}件</strong><br>該当する登録を選択してください。`;
-  candidates.forEach((c, i) => {
-    const label = String(c.lendingGroup ?? "").trim() || "標準";
-    html += `<label class="roster-candidate"><input type="radio" name="rosterCandidate" value="${i}" onchange="selectRosterCandidate(${i})">部署：${escapeRosterText(c.department)}<br>貸与グループ：${escapeRosterText(label)}</label>`;
+  let html = `<strong>名簿検索結果：${matchedCandidates.length}件</strong><br>該当する登録を選択してください。`;
+  matchedCandidates.forEach((c, index) => {
+    const groupLabel = String(c.lendingGroup ?? "").trim() || "標準";
+    html += `<label class="roster-candidate"><input type="radio" name="rosterCandidate" value="${index}" onchange="selectRosterCandidate(${index})">職種：${escapeRosterText(c.job)}<br>部署：${escapeRosterText(c.department)}<br>貸与グループ：${escapeRosterText(groupLabel)}</label>`;
   });
   area.innerHTML = html;
-  area._candidates = candidates;
+  area._candidates = matchedCandidates;
 }
 function selectRosterCandidate(index) {
   const area = document.getElementById("rosterSearchResult");
@@ -1594,8 +1581,12 @@ async function searchRoster() {
     if (!res.ok) throw new Error(json?.message || txt || `HTTP ${res.status}`);
     if (!json) throw new Error("PAからの応答が空です。");
     renderRosterSearchResponse(json);
-  } catch (e) { setRosterSearchResult("名簿検索中にエラーが発生しました。\n" + e.message, "error"); }
-  finally { if (button) { button.disabled = false; button.textContent = "名簿検索"; } }
+  } catch (error) {
+    clearRosterAppliedState();
+    setRosterSearchResult("名簿検索中にエラーが発生しました。\n" + error.message, "error");
+  } finally {
+    if (button) { button.disabled = false; button.textContent = "名簿検索"; }
+  }
 }
 function normalizeEmployeeNoInput(input) {
   if (!input) return;
