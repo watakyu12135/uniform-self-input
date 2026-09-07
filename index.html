@@ -79,31 +79,18 @@ button {
   font-size: 16px;
 }
 
-/* 名簿検索 */
-.roster-search-area {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  max-width: 520px;
-  margin: -6px 0 18px;
-}
-.roster-search-button {
-  margin-top: 0;
-  padding: 9px 18px;
-  border: 1px solid #2f6fb2;
-  border-radius: 6px;
-  background: #4a90e2;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.roster-search-button:hover,
-.roster-search-button:focus-visible {
-  background: #3478c2;
-  outline: 3px solid rgba(74, 144, 226, 0.25);
-}
 
+/* 名簿検索 */
+.roster-search-area { max-width:520px; margin:-6px 0 18px; }
+.roster-search-button { margin-top:0; padding:9px 18px; border:1px solid #2f6fb2; border-radius:6px; background:#4a90e2; color:#fff; font-size:15px; font-weight:700; cursor:pointer; }
+.roster-search-button:disabled { background:#9aa8b6; border-color:#9aa8b6; cursor:wait; }
+.roster-search-result { margin-top:10px; padding:10px 12px; border-radius:6px; line-height:1.6; }
+.roster-search-result:empty { display:none; }
+.roster-search-result.info { border:1px solid #8cb9e8; background:#eef6ff; color:#173d63; }
+.roster-search-result.success { border:1px solid #6fb27a; background:#effaf1; color:#205c2b; }
+.roster-search-result.warning { border:1px solid #e1a63a; background:#fff8e8; color:#684500; }
+.roster-search-result.error { border:1px solid #d76a6a; background:#fff1f1; color:#8b1616; }
+.roster-candidate { margin-top:8px; padding:8px; border-top:1px solid rgba(0,0,0,.12); }
 
 /* 貸与枚数 */
 #categoryStatus {
@@ -669,16 +656,8 @@ tr.inseam-row .cell-inseam { display: block !important; margin: 0; padding: 0; b
   box-sizing: border-box;
 }
 
-  .roster-search-area {
-    width: 100%;
-    max-width: none;
-    margin-top: -4px;
-  }
-  .roster-search-button {
-    width: 100%;
-  }
-
-
+  .roster-search-area { width:100%; max-width:none; }
+  .roster-search-button { width:100%; }
   .measure-inline:not(.hidden) {
     display: inline-block;
     margin-top: 6px;
@@ -1024,9 +1003,9 @@ tr.inseam-row .cell-inseam { display: block !important; margin: 0; padding: 0; b
       </div>
     </div>
 
-
     <div id="rosterSearchArea" class="roster-search-area hidden">
       <button type="button" id="rosterSearchButton" class="roster-search-button" onclick="searchRoster()">名簿検索</button>
+      <div id="rosterSearchResult" class="roster-search-result" role="status" aria-live="polite"></div>
     </div>
     <div class="basic-select-field">
       <label for="gender">性別</label>
@@ -1206,6 +1185,7 @@ tr.inseam-row .cell-inseam { display: block !important; margin: 0; padding: 0; b
 
 const HP_DEADLINE_FLOW_URL = "https://defaultc8b61927a8e4402d9bae737ebea8e5.6c.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/25/workflows/d924c6a649f44455992c339678e781f3/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=KoZtWybbrtFHIi307-m3dgXNIegRf_eIxOIrbqZzG4Q";
 const ROSTER_CHECK_FLOW_URL = "https://defaultc8b61927a8e4402d9bae737ebea8e5.6c.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/05/workflows/d5ee07df145049e4a60655f02035b009/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=kxmBOK-tVp6ts4sKgsWUd2NhIQNZbNlG1AK6hNlnpTA";
+const LENDING_SEARCH_FLOW_URL = "https://defaultc8b61927a8e4402d9bae737ebea8e5.6c.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/16/workflows/0f806a85bd3c4844a97112bb9f61d3f6/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=HSWMQ01YXMCsRrBqMwcf3Pk5ZqLpVdGgzy6dSiq9dws";
 
 function getCustomer() {
   const url = new URL(window.location.href);
@@ -1457,17 +1437,50 @@ function setupBasicInfoVisibility() {
   }
 }
 
-function searchRoster() {
+function setRosterSearchResult(message, type = "info") {
+  const area = document.getElementById("rosterSearchResult");
+  if (!area) return;
+  area.className = "roster-search-result " + type;
+  area.textContent = message;
+}
+function escapeRosterText(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[char]);
+}
+function renderRosterSearchResponse(json) {
+  const area = document.getElementById("rosterSearchResult");
+  if (!area) return;
+  const candidates = Array.isArray(json.candidates) ? json.candidates : [];
+  const foundCount = Number(json.foundCount ?? candidates.length) || 0;
+  if (json.result !== "ok") {
+    setRosterSearchResult(json.message || "名簿検索に失敗しました。", "error");
+    return;
+  }
+  if (foundCount === 0) {
+    setRosterSearchResult("名簿に一致する登録はありませんでした。", "warning");
+    return;
+  }
+  area.className = "roster-search-result success";
+  let html = `<strong>名簿検索結果：${foundCount}件</strong>`;
+  candidates.forEach((candidate, index) => {
+    const lendingGroup = String(candidate.lendingGroup ?? "").trim() || "標準";
+    html += `<div class="roster-candidate">` +
+      `${foundCount > 1 ? `<strong>候補${index + 1}</strong><br>` : ""}` +
+      `姓名：${escapeRosterText(candidate.fullName)}<br>` +
+      `セイメイ：${escapeRosterText(candidate.fullNameKana)}<br>` +
+      `職種：${escapeRosterText(candidate.job)}<br>` +
+      `部署：${escapeRosterText(candidate.department)}<br>` +
+      `貸与グループ：${escapeRosterText(lendingGroup)}` +
+      `</div>`;
+  });
+  area.innerHTML = html;
+}
+async function searchRoster() {
   if (!currentData) {
-    alert("設定データを読み込み中のため、まだ名簿検索を実行できません。しばらく待ってからもう一度お試しください。");
+    setRosterSearchResult("設定データを読み込み中です。しばらく待ってから再度お試しください。", "error");
     return;
   }
-
-  if (!isBasicInfoActive("名簿検索")) {
-    alert("このお客様では名簿検索を利用できません。");
-    return;
-  }
-
   const employeeNoInput = document.getElementById("employeeNo");
   const employeeNo = employeeNoInput ? employeeNoInput.value.trim() : "";
   const sei = document.getElementById("sei").value.trim();
@@ -1477,42 +1490,48 @@ function searchRoster() {
   const gender = document.getElementById("gender").value;
   const job = document.getElementById("job").value;
   const errors = [];
-
   if (!sei) errors.push("姓を入力してください。");
   if (!mei) errors.push("名を入力してください。");
-
-  if (sei && !isFullWidthText(sei)) {
-    errors.push("姓は全角で入力してください。");
-  }
-  if (mei && !isFullWidthText(mei)) {
-    errors.push("名は全角で入力してください。");
-  }
-
+  if (sei && !isFullWidthText(sei)) errors.push("姓は全角で入力してください。");
+  if (mei && !isFullWidthText(mei)) errors.push("名は全角で入力してください。");
   if (!gender) errors.push("性別を選択してください。");
   if (!job) errors.push("職種を選択してください。");
-
   if (employeeNo) {
-    if (!validateEmployeeNoValue(employeeNo)) {
-      errors.push("職員番号は半角英数字で入力してください。");
-    }
+    if (!validateEmployeeNoValue(employeeNo)) errors.push("職員番号は半角英数字で入力してください。");
   } else {
     if (!seiKana) errors.push("セイを入力してください。");
     if (!meiKana) errors.push("メイを入力してください。");
-
-    if (seiKana && !isFullWidthKatakana(seiKana)) {
-      errors.push("セイは全角カタカナで入力してください。");
-    }
-    if (meiKana && !isFullWidthKatakana(meiKana)) {
-      errors.push("メイは全角カタカナで入力してください。");
-    }
+    if (seiKana && !isFullWidthKatakana(seiKana)) errors.push("セイは全角カタカナで入力してください。");
+    if (meiKana && !isFullWidthKatakana(meiKana)) errors.push("メイは全角カタカナで入力してください。");
   }
-
   if (errors.length > 0) {
-    alert("名簿検索を実行できません。\n\n" + errors.join("\n"));
+    setRosterSearchResult("名簿検索を実行できません。\n" + errors.join("\n"), "error");
     return;
   }
-
-  alert("PAは現在開発中です");
+  const button = document.getElementById("rosterSearchButton");
+  if (button) { button.disabled = true; button.textContent = "検索中..."; }
+  setRosterSearchResult("名簿を検索しています。", "info");
+  try {
+    const response = await fetch(LENDING_SEARCH_FLOW_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        publicKey: getCustomer(), customerCode: currentData.customerCode || "",
+        employeeNo, sei, mei, seiKana, meiKana, gender, job
+      })
+    });
+    const responseText = await response.text();
+    let json;
+    try { json = responseText ? JSON.parse(responseText) : null; }
+    catch { throw new Error("PAからJSON形式ではない応答が返されました。"); }
+    if (!response.ok) throw new Error((json && json.message) || responseText || `HTTP ${response.status}`);
+    if (!json) throw new Error("PAからの応答が空です。");
+    renderRosterSearchResponse(json);
+  } catch (error) {
+    setRosterSearchResult("名簿検索中にエラーが発生しました。\n" + error.message, "error");
+  } finally {
+    if (button) { button.disabled = false; button.textContent = "名簿検索"; }
+  }
 }
 function normalizeEmployeeNoInput(input) {
   if (!input) return;
