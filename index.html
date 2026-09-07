@@ -1507,38 +1507,170 @@ function applyRosterCandidate(candidate) {
 function renderRosterSearchResponse(json) {
   const area = document.getElementById("rosterSearchResult");
   if (!area) return;
-  const allCandidates = Array.isArray(json.candidates) ? json.candidates : [];
+
+  const allCandidates = Array.isArray(json.candidates)
+    ? json.candidates
+    : [];
+
   if (json.result !== "ok") {
     clearRosterAppliedState();
-    setRosterSearchResult(json.message || "名簿検索に失敗しました。", "error");
+
+    setRosterSearchResult(
+      json.message || "名簿検索に失敗しました。",
+      "error"
+    );
+
     return;
   }
-  const inputJob = String(document.getElementById("job").value || "").trim();
-  const matchedCandidates = allCandidates.filter(candidate => String(candidate.job ?? "").trim() === inputJob);
-  if (allCandidates.length > 0 && matchedCandidates.length === 0) {
-    clearRosterAppliedState();
-    setRosterSearchResult("職種を確認し、選択し直してから再度「名簿検索」を押してください。", "error");
-    return;
-  }
+
+  /*
+   * PAから候補が1件も返らなかった場合
+   */
   if (allCandidates.length === 0) {
     clearRosterAppliedState();
     updateLendingPatternOptions();
-    setRosterSearchResult("名簿に一致する登録はありませんでした。該当職種の貸与パターンから選択してください。", "warning");
+
+    setRosterSearchResult(
+      "名簿に一致する登録はありませんでした。該当職種の貸与パターンから選択してください。",
+      "warning"
+    );
+
     return;
   }
-  area.className = "roster-search-result success";
-  if (matchedCandidates.length === 1) {
-    const c = matchedCandidates[0];
-    const groupLabel = String(c.lendingGroup ?? "").trim() || "標準";
-    area.innerHTML = `<strong>名簿検索結果：1件</strong><div class="roster-candidate">姓名：${escapeRosterText(c.fullName)}<br>セイメイ：${escapeRosterText(c.fullNameKana)}<br>職種：${escapeRosterText(c.job)}<br>部署：${escapeRosterText(c.department)}<br>貸与グループ：${escapeRosterText(groupLabel)}</div>`;
-    applyRosterCandidate(c);
-    return;
-  }
-  let html = `<strong>名簿検索結果：${matchedCandidates.length}件</strong><br>該当する登録を選択してください。`;
-  matchedCandidates.forEach((c, index) => {
-    const groupLabel = String(c.lendingGroup ?? "").trim() || "標準";
-    html += `<label class="roster-candidate"><input type="radio" name="rosterCandidate" value="${index}" onchange="selectRosterCandidate(${index})">職種：${escapeRosterText(c.job)}<br>部署：${escapeRosterText(c.department)}<br>貸与グループ：${escapeRosterText(groupLabel)}</label>`;
+
+  const inputGender = String(
+    document.getElementById("gender").value || ""
+  ).trim();
+
+  const inputJob = String(
+    document.getElementById("job").value || ""
+  ).trim();
+
+  /*
+   * 最初に性別が一致する候補だけを抽出
+   */
+  const genderMatchedCandidates = allCandidates.filter(candidate => {
+    const rosterGender = String(
+      candidate.gender ?? ""
+    ).trim();
+
+    return rosterGender === inputGender;
   });
+
+  /*
+   * 姓名などは一致しているが、性別が1件も一致しない場合
+   */
+  if (genderMatchedCandidates.length === 0) {
+    clearRosterAppliedState();
+
+    setRosterSearchResult(
+      "性別を確認し、選択し直してから再度「名簿検索」を押してください。",
+      "error"
+    );
+
+    return;
+  }
+
+  /*
+   * 性別が一致した候補の中から、
+   * さらに職種が一致する候補だけを抽出
+   */
+  const matchedCandidates = genderMatchedCandidates.filter(candidate => {
+    const rosterJob = String(
+      candidate.job ?? ""
+    ).trim();
+
+    return rosterJob === inputJob;
+  });
+
+  /*
+   * 姓名と性別は一致しているが、職種が1件も一致しない場合
+   */
+  if (matchedCandidates.length === 0) {
+    clearRosterAppliedState();
+
+    setRosterSearchResult(
+      "職種を確認し、選択し直してから再度「名簿検索」を押してください。",
+      "error"
+    );
+
+    return;
+  }
+
+  area.className = "roster-search-result success";
+
+  /*
+   * 性別と職種が一致する候補が1件の場合
+   */
+  if (matchedCandidates.length === 1) {
+    const candidate = matchedCandidates[0];
+
+    const lendingGroupLabel =
+      String(candidate.lendingGroup ?? "").trim() || "標準";
+
+    area.innerHTML =
+      "<strong>名簿検索結果：1件</strong>" +
+      '<div class="roster-candidate">' +
+      "姓名：" +
+      escapeRosterText(candidate.fullName) +
+      "<br>" +
+      "セイメイ：" +
+      escapeRosterText(candidate.fullNameKana) +
+      "<br>" +
+      "性別：" +
+      escapeRosterText(candidate.gender) +
+      "<br>" +
+      "職種：" +
+      escapeRosterText(candidate.job) +
+      "<br>" +
+      "部署：" +
+      escapeRosterText(candidate.department) +
+      "<br>" +
+      "貸与グループ：" +
+      escapeRosterText(lendingGroupLabel) +
+      "</div>";
+
+    applyRosterCandidate(candidate);
+    return;
+  }
+
+  /*
+   * 性別と職種が一致する候補が複数ある場合
+   */
+  let html =
+    "<strong>名簿検索結果：" +
+    matchedCandidates.length +
+    "件</strong><br>" +
+    "該当する登録を選択してください。";
+
+  matchedCandidates.forEach((candidate, index) => {
+    const lendingGroupLabel =
+      String(candidate.lendingGroup ?? "").trim() || "標準";
+
+    html +=
+      '<label class="roster-candidate">' +
+      '<input type="radio" ' +
+      'name="rosterCandidate" ' +
+      'value="' +
+      index +
+      '" ' +
+      'onchange="selectRosterCandidate(' +
+      index +
+      ')">' +
+      "性別：" +
+      escapeRosterText(candidate.gender) +
+      "<br>" +
+      "職種：" +
+      escapeRosterText(candidate.job) +
+      "<br>" +
+      "部署：" +
+      escapeRosterText(candidate.department) +
+      "<br>" +
+      "貸与グループ：" +
+      escapeRosterText(lendingGroupLabel) +
+      "</label>";
+  });
+
   area.innerHTML = html;
   area._candidates = matchedCandidates;
 }
