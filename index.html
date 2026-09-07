@@ -981,25 +981,25 @@ tr.inseam-row .cell-inseam { display: block !important; margin: 0; padding: 0; b
 
     <div id="employeeNoArea" class="basic-field hidden">
       <label for="employeeNo">職員番号</label>
-      <input id="employeeNo" inputmode="latin" autocomplete="off" maxlength="30" oninput="normalizeEmployeeNoInput(this)">
+      <input id="employeeNo" inputmode="latin" autocomplete="off" maxlength="30" oninput="normalizeEmployeeNoInput(this); resetRosterSearchForInputChange()">
     </div>
 
     <div class="name-area">
       <div class="name-field">
         <label for="sei">姓</label>
-        <input id="sei" inputmode="text" autocomplete="family-name">
+        <input id="sei" inputmode="text" autocomplete="family-name" oninput="resetRosterSearchForInputChange()">
       </div>
       <div class="name-field">
         <label for="mei">名</label>
-        <input id="mei" inputmode="text" autocomplete="given-name">
+        <input id="mei" inputmode="text" autocomplete="given-name" oninput="resetRosterSearchForInputChange()">
       </div>
       <div class="name-field">
         <label for="seiKana">セイ</label>
-        <input id="seiKana" inputmode="katakana" autocomplete="off">
+        <input id="seiKana" inputmode="katakana" autocomplete="off" oninput="resetRosterSearchForInputChange()">
       </div>
       <div class="name-field">
         <label for="meiKana">メイ</label>
-        <input id="meiKana" inputmode="katakana" autocomplete="off">
+        <input id="meiKana" inputmode="katakana" autocomplete="off" oninput="resetRosterSearchForInputChange()">
       </div>
     </div>
 
