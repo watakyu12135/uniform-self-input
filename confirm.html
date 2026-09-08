@@ -861,6 +861,8 @@ function normalizePayloadForPowerAutomate(payload){
     o["性別"] = o["性別"] || o.gender || "";
     o["職種"] = o["職種"] || o.job || "";
     o["部署"] = o["部署"] || o.department || "";
+    o["登録職種"] = o["登録職種"] || o["職種"] || o.job || "";
+    o["登録部署"] = o["登録部署"] || o["部署"] || o.department || "";
     o.lendingGroup = String(o.lendingGroup ?? o["登録貸与グループ"] ?? o["貸与グループ"] ?? "").trim();
     o["貸与グループ"] = o.lendingGroup;
     o["登録貸与グループ"] = o.lendingGroup;
