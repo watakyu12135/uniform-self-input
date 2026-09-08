@@ -1821,12 +1821,15 @@ function applyConfirmReturnData() {
   const genderValue = getFirstStoredValue(base, ["性別", "gender"]);
   const jobValue = getFirstStoredValue(base, ["職種", "job"]);
   const departmentValue = getFirstStoredValue(base, ["部署", "department"]);
+  const lendingGroupValue = getFirstStoredValue(base, ["登録貸与グループ", "貸与グループ", "lendingGroup"]);
   const lendingPatternCode = getFirstStoredValue(base, ["貸与パターンコード", "lendingPatternCode"]);
   document.getElementById("gender").value = genderValue;
   updateJobOptions();
   addMissingOption(document.getElementById("job"), jobValue);
   document.getElementById("job").value = jobValue;
   changeJob();
+  currentLendingGroup = lendingGroupValue;
+  rosterSearchCompleted = true;
   updateLendingPatternOptions(lendingPatternCode);
   lastAcceptedLendingPatternCode = lendingPatternCode;
   if (lendingPatternCode) changeLendingPattern();
@@ -1916,6 +1919,7 @@ function applyEditModeData() {
 document.getElementById("seiKana").value = getFirstStoredValue(base, ["セイ", "シ", "seiKana"]);
 document.getElementById("meiKana").value = getFirstStoredValue(base, ["メイ", "meiKana"]);
 
+  const lendingGroupValue = getFirstStoredValue(base, ["登録貸与グループ", "貸与グループ", "lendingGroup"]);
   const lendingPatternCode = getFirstStoredValue(base, ["貸与パターンコード", "lendingPatternCode"]);
   document.getElementById("gender").value = base["性別"] || "";
   updateJobOptions();
@@ -1924,6 +1928,8 @@ document.getElementById("meiKana").value = getFirstStoredValue(base, ["メイ", 
   document.getElementById("job").value = base["職種"] || "";
 
   changeJob();
+  currentLendingGroup = lendingGroupValue;
+  rosterSearchCompleted = true;
   updateLendingPatternOptions(lendingPatternCode);
   lastAcceptedLendingPatternCode = lendingPatternCode;
   if (lendingPatternCode) changeLendingPattern();
@@ -3049,6 +3055,9 @@ function buildMeasurementPayload(common) {
 "性別": common.gender,
   "職種": common.job,
   "部署": common.department,
+  lendingGroup: common.lendingGroup || "",
+  "貸与グループ": common["貸与グループ"] || "",
+  "登録貸与グループ": common["登録貸与グループ"] || "",
   "登録番号": common["登録番号"],
   registrationNo: common.registrationNo,
   "採寸区分": measurementType,
@@ -3835,6 +3844,9 @@ meiKana: meiKana,
   gender: document.getElementById("gender").value,
   job: document.getElementById("job").value,
   department: departmentSelect ? departmentSelect.value : "",
+  lendingGroup: currentLendingGroup === null ? "" : currentLendingGroup,
+  "貸与グループ": currentLendingGroup === null ? "" : currentLendingGroup,
+  "登録貸与グループ": currentLendingGroup === null ? "" : currentLendingGroup,
   registrationNo: effectiveEditMode ? originalRegistrationNo : "",
   "登録番号": effectiveEditMode ? originalRegistrationNo : "",
   "貸与パターンコード": getSelectedLendingPatternCode(),
@@ -3899,6 +3911,9 @@ data.push({
   "性別": common.gender,
   "職種": common.job,
   "部署": common.department,
+  lendingGroup: common.lendingGroup || "",
+  "貸与グループ": common["貸与グループ"] || "",
+  "登録貸与グループ": common["登録貸与グループ"] || "",
   "貸与パターンコード": common["貸与パターンコード"],
   "貸与パターン名": common["貸与パターン名"],
   product,
