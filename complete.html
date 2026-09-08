@@ -273,6 +273,12 @@ function buildMailHtml(preparedMailDraft) {
   const gender = first.gender || first["性別"] || "";
   const job = first.job || first["職種"] || "";
   const department = first.department || first["部署"] || "";
+  const lendingGroup = String(
+    first["登録貸与グループ"] ??
+    first["貸与グループ"] ??
+    first.lendingGroup ??
+    ""
+  ).trim();
 
   const basicRows = [
     ["顧客", customerName],
@@ -282,6 +288,7 @@ function buildMailHtml(preparedMailDraft) {
     ["性別", gender],
     ["職種", job],
     ["部署", department || "なし"],
+    lendingGroup ? ["貸与区分", lendingGroup] : null,
     ["採寸番号", info.measureNo || ""]
   ].filter(Boolean).map(([label, value]) => `
     <tr>
