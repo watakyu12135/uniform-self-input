@@ -17,14 +17,6 @@
     "min": 50,
     "max": 85
   },
-    "STEP": {
-    "scope": "standardOnly",
-    "mode": "STEP",
-    "step": 4,
-    "allowException": true,
-    "min": 50,
-    "max": 85
-  },
     "SELECT": {
     "scope": "standardOnly",
     "mode": "SELECT",
@@ -3856,7 +3848,7 @@
           "measurementGroup": "下衣",
           "sizeSuffix": "サイズ",
           "inseamAlterable": 1,
-          "inseamMode": "刻み",
+          "inseamMode": "自由",
           "sizes": [{"value": "S", "label": "Sサイズ", "type": "standard"},{"value": "M", "label": "Mサイズ", "type": "standard"},{"value": "L", "label": "Lサイズ", "type": "standard"},{"value": "LL", "label": "LLサイズ", "type": "standard"},{"value": "3L", "label": "3Lサイズ", "type": "standard"},{"value": "SS", "label": "SSサイズ", "type": "custom"},{"value": "4L", "label": "4Lサイズ", "type": "custom"},{"value": "5L", "label": "5Lサイズ", "type": "custom"},{"value": "6L", "label": "6Lサイズ", "type": "custom"},{"value": "7L", "label": "7Lサイズ", "type": "custom"},{"value": "8L", "label": "8Lサイズ", "type": "custom"},{"value": "9L", "label": "9Lサイズ", "type": "custom"},{"value": "別寸", "label": "別寸", "type": "bespoke"}]
         }
       ],
@@ -3917,7 +3909,7 @@
           "measurementGroup": "下衣",
           "sizeSuffix": "サイズ",
           "inseamAlterable": 1,
-          "inseamMode": "刻み",
+          "inseamMode": "自由",
           "sizes": [{"value": "S", "label": "Sサイズ", "type": "standard"},{"value": "M", "label": "Mサイズ", "type": "standard"},{"value": "L", "label": "Lサイズ", "type": "standard"},{"value": "LL", "label": "LLサイズ", "type": "standard"},{"value": "3L", "label": "3Lサイズ", "type": "standard"},{"value": "SS", "label": "SSサイズ", "type": "custom"},{"value": "4L", "label": "4Lサイズ", "type": "custom"},{"value": "5L", "label": "5Lサイズ", "type": "custom"},{"value": "6L", "label": "6Lサイズ", "type": "custom"},{"value": "7L", "label": "7Lサイズ", "type": "custom"},{"value": "8L", "label": "8Lサイズ", "type": "custom"},{"value": "9L", "label": "9Lサイズ", "type": "custom"},{"value": "別寸", "label": "別寸", "type": "bespoke"}]
         }
       ],
@@ -4895,7 +4887,7 @@
           "measurementGroup": "下衣",
           "sizeSuffix": "サイズ",
           "inseamAlterable": 1,
-          "inseamMode": "刻み",
+          "inseamMode": "自由",
           "sizes": [{"value": "S", "label": "Sサイズ", "type": "standard"},{"value": "M", "label": "Mサイズ", "type": "standard"},{"value": "L", "label": "Lサイズ", "type": "standard"},{"value": "LL", "label": "LLサイズ", "type": "standard"},{"value": "3L", "label": "3Lサイズ", "type": "standard"},{"value": "4L", "label": "4Lサイズ", "type": "standard"},{"value": "SS", "label": "SSサイズ", "type": "custom"},{"value": "5L", "label": "5Lサイズ", "type": "custom"},{"value": "6L", "label": "6Lサイズ", "type": "custom"},{"value": "7L", "label": "7Lサイズ", "type": "custom"},{"value": "8L", "label": "8Lサイズ", "type": "custom"},{"value": "9L", "label": "9Lサイズ", "type": "custom"},{"value": "別寸", "label": "別寸", "type": "bespoke"}]
         }
       ],
