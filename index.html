@@ -29,7 +29,7 @@ th, td {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 button {
@@ -1331,14 +1331,8 @@ function updateLendingPatternOptions(selectedCode = "") {
   const area = document.getElementById("lendingPatternArea");
   const optionsArea = document.getElementById("lendingPatternOptions");
   if (!area || !optionsArea) return false;
-  if (!isLendingPatternActive()) {
-    area.classList.add("hidden");
-    optionsArea.innerHTML = "";
-    return false;
-  }
-
   const jobData = getSelectedJobBaseData();
-  const allPatterns = jobData && Array.isArray(jobData.lendingPatterns)
+  const allPatterns = jobData && isLendingPatternActive() && Array.isArray(jobData.lendingPatterns)
     ? [...jobData.lendingPatterns]
     : [];
   const patterns = allPatterns
@@ -1431,20 +1425,6 @@ function setupBasicInfoVisibility() {
       if (employeeInput) {
         employeeInput.value = "";
       }
-    }
-  }
-
-  const lendingPatternArea = document.getElementById("lendingPatternArea");
-  const lendingPatternOptions = document.getElementById("lendingPatternOptions");
-
-  if (lendingPatternArea) {
-    if (isLendingPatternActive()) {
-      // 実際の選択肢の表示・非表示は updateLendingPatternOptions で判定する。
-      // ここでは有効時に備えて固定の非表示状態を解除しない。
-    } else {
-      lendingPatternArea.classList.add("hidden");
-      if (lendingPatternOptions) lendingPatternOptions.innerHTML = "";
-      lastAcceptedLendingPatternCode = "";
     }
   }
 
@@ -3825,7 +3805,6 @@ async function submitData(event) {
   const departmentSelect = document.getElementById("department");
 
   if (
-    isDepartmentActive() &&
     departmentArea &&
     departmentSelect &&
     !departmentArea.classList.contains("hidden") &&
@@ -3855,9 +3834,9 @@ seiKana: seiKana,
 meiKana: meiKana,
   gender: document.getElementById("gender").value,
   job: document.getElementById("job").value,
-  department: isDepartmentActive() && departmentSelect ? departmentSelect.value : "",
+  department: departmentSelect ? departmentSelect.value : "",
   "登録職種": document.getElementById("job").value,
-  "登録部署": isDepartmentActive() && departmentSelect ? departmentSelect.value : "",
+  "登録部署": departmentSelect ? departmentSelect.value : "",
   lendingGroup: currentLendingGroup === null ? "" : currentLendingGroup,
   "貸与グループ": currentLendingGroup === null ? "" : currentLendingGroup,
   "登録貸与グループ": currentLendingGroup === null ? "" : currentLendingGroup,
