@@ -1,4 +1,4 @@
-﻿﻿{
+{
   "customerCode": "31319999",
   "customerName": "オンライン病院",
   "basicInfos": [
@@ -7,13 +7,14 @@
     {"name": "性別", "active": true},
     {"name": "職種", "active": true},
     {"name": "部署", "active": true},
-    {"name": "貸与パターン", "active": false}
+    {"name": "貸与パターン", "active": false},
+    {"name": "名簿検索", "active": true}
   ],
   "inseamRules": {
     "FREE": {
     "scope": "standardOnly",
     "mode": "FREE",
-    "min": 50,
+    "min": 55,
     "max": 90
   }
   },
