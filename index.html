@@ -1548,10 +1548,48 @@ function applyRosterCandidate(candidate) {
   }
   createTable(currentData, inputJob, inputGender);
 }
+function normalizeRosterCompareText(value) {
+  return String(value ?? "")
+    .replace(/[\s\u3000]/g, "")
+    .trim();
+}
+
+function buildRosterCandidateHtml(candidate, withRadio = false, index = 0) {
+  const fullName = String(candidate.fullName ?? "").trim();
+  const fullNameKana = String(candidate.fullNameKana ?? "").trim();
+  const gender = String(candidate.gender ?? "").trim();
+  const job = String(candidate.job ?? "").trim();
+  const department = String(candidate.department ?? "").trim();
+  const lendingGroup = String(candidate.lendingGroup ?? "").trim();
+
+  let html = withRadio
+    ? '<label class="roster-candidate"><input type="radio" name="rosterCandidate" value="' + index +
+      '" onchange="selectRosterCandidate(' + index + ')">'
+    : '<div class="roster-candidate">';
+
+  html += "姓名：" + escapeRosterText(fullName) + "<br>";
+  html += "セイメイ：" + escapeRosterText(fullNameKana) + "<br>";
+  html += "性別：" + escapeRosterText(gender) + "<br>";
+  html += "職種：" + escapeRosterText(job);
+  if (department) html += "<br>部署：" + escapeRosterText(department);
+  if (lendingGroup) html += "<br>貸与グループ：" + escapeRosterText(lendingGroup);
+  html += withRadio ? "</label>" : "</div>";
+  return html;
+}
+
 function renderRosterSearchResponse(json) {
   const area = document.getElementById("rosterSearchResult");
   if (!area) return;
+
   const allCandidates = Array.isArray(json.candidates) ? json.candidates : [];
+  const enteredEmployeeNo = String(document.getElementById("employeeNo")?.value || "").trim();
+  const inputFullName = normalizeRosterCompareText(
+    String(document.getElementById("sei").value || "") +
+    String(document.getElementById("mei").value || "")
+  );
+  const inputGender = String(document.getElementById("gender").value || "").trim();
+  const inputJob = String(document.getElementById("job").value || "").trim();
+
   if (json.result !== "ok") {
     rosterSearchCompleted = false;
     clearRosterAppliedState();
@@ -1559,64 +1597,118 @@ function renderRosterSearchResponse(json) {
     hideLendingResultsUntilRosterSearch();
     return;
   }
+
   rosterSearchCompleted = true;
+
+  // 職員番号検索は、PA側で職員番号だけを条件に候補を返す。
+  if (enteredEmployeeNo) {
+    if (allCandidates.length === 0) {
+      rosterSearchCompleted = false;
+      clearRosterAppliedState();
+      setRosterSearchResult("入力した職員番号は名簿に登録されていません。", "warning");
+      hideLendingResultsUntilRosterSearch();
+      return;
+    }
+
+    const nameMatchedCandidates = allCandidates.filter(candidate =>
+      normalizeRosterCompareText(candidate.fullName) === inputFullName
+    );
+    if (nameMatchedCandidates.length === 0) {
+      rosterSearchCompleted = false;
+      clearRosterAppliedState();
+      setRosterSearchResult("職員番号を確認の上、再検索して下さい。", "error");
+      hideLendingResultsUntilRosterSearch();
+      return;
+    }
+
+    const genderMatchedCandidates = nameMatchedCandidates.filter(candidate =>
+      String(candidate.gender ?? "").trim() === inputGender
+    );
+    if (genderMatchedCandidates.length === 0) {
+      rosterSearchCompleted = false;
+      clearRosterAppliedState();
+      setRosterSearchResult("性別を確認の上、再検索してください。", "error");
+      hideLendingResultsUntilRosterSearch();
+      return;
+    }
+
+    const jobMatchedCandidates = genderMatchedCandidates.filter(candidate =>
+      String(candidate.job ?? "").trim() === inputJob
+    );
+    if (jobMatchedCandidates.length === 0) {
+      rosterSearchCompleted = false;
+      clearRosterAppliedState();
+      setRosterSearchResult("職種を確認の上、再検索してください。", "error");
+      hideLendingResultsUntilRosterSearch();
+      return;
+    }
+
+    area.className = "roster-search-result success";
+    area.innerHTML = "<strong>名簿検索結果：1件</strong>" +
+      buildRosterCandidateHtml(jobMatchedCandidates[0], false);
+    applyRosterCandidate(jobMatchedCandidates[0]);
+    return;
+  }
+
+  // 姓名検索は、PA側で姓・名・セイ・メイだけを条件に候補を返す。
   if (allCandidates.length === 0) {
     clearRosterAppliedState();
     updateLendingPatternOptions();
-    setRosterSearchResult("名簿に一致する登録はありませんでした。該当職種の貸与パターンから選択してください。", "warning");
+    setRosterSearchResult("名簿に一致する登録はありませんでした。", "warning");
     return;
   }
-  const inputGender = String(document.getElementById("gender").value || "").trim();
-  const inputJob = String(document.getElementById("job").value || "").trim();
+
   const genderMatchedCandidates = allCandidates.filter(candidate =>
     String(candidate.gender ?? "").trim() === inputGender
   );
   if (genderMatchedCandidates.length === 0) {
     rosterSearchCompleted = false;
     clearRosterAppliedState();
-    setRosterSearchResult("性別を確認し、選択し直してから再度「名簿検索」を押してください。", "error");
+    setRosterSearchResult("性別を確認し、再検索してください。", "error");
     hideLendingResultsUntilRosterSearch();
     return;
   }
+
   const matchedCandidates = genderMatchedCandidates.filter(candidate =>
     String(candidate.job ?? "").trim() === inputJob
   );
   if (matchedCandidates.length === 0) {
     rosterSearchCompleted = false;
     clearRosterAppliedState();
-    setRosterSearchResult("職種を確認し、選択し直してから再度「名簿検索」を押してください。", "error");
+    setRosterSearchResult("職種を確認し、再検索してください。", "error");
     hideLendingResultsUntilRosterSearch();
     return;
   }
-  area.className = "roster-search-result success";
+
   if (matchedCandidates.length === 1) {
-    const candidate = matchedCandidates[0];
-    const lendingGroupLabel = String(candidate.lendingGroup ?? "").trim() || "標準";
+    area.className = "roster-search-result success";
     area.innerHTML = "<strong>名簿検索結果：1件</strong>" +
-      '<div class="roster-candidate">' +
-      "姓名：" + escapeRosterText(candidate.fullName) + "<br>" +
-      "セイメイ：" + escapeRosterText(candidate.fullNameKana) + "<br>" +
-      "性別：" + escapeRosterText(candidate.gender) + "<br>" +
-      "職種：" + escapeRosterText(candidate.job) + "<br>" +
-      "部署：" + escapeRosterText(candidate.department) + "<br>" +
-      "貸与グループ：" + escapeRosterText(lendingGroupLabel) + "</div>";
-    applyRosterCandidate(candidate);
+      buildRosterCandidateHtml(matchedCandidates[0], false);
+    applyRosterCandidate(matchedCandidates[0]);
     return;
   }
+
+  if (isEmployeeNoActive()) {
+    rosterSearchCompleted = false;
+    clearRosterAppliedState();
+    setRosterSearchResult(
+      "同姓同名の登録が複数あります。\n職員番号を入力して再検索してください。",
+      "warning"
+    );
+    hideLendingResultsUntilRosterSearch();
+    return;
+  }
+
+  area.className = "roster-search-result success";
   let html = "<strong>名簿検索結果：" + matchedCandidates.length +
     "件</strong><br>該当する登録を選択してください。";
   matchedCandidates.forEach((candidate, index) => {
-    const label = String(candidate.lendingGroup ?? "").trim() || "標準";
-    html += '<label class="roster-candidate"><input type="radio" name="rosterCandidate" value="' + index +
-      '" onchange="selectRosterCandidate(' + index + ')">' +
-      "性別：" + escapeRosterText(candidate.gender) + "<br>" +
-      "職種：" + escapeRosterText(candidate.job) + "<br>" +
-      "部署：" + escapeRosterText(candidate.department) + "<br>" +
-      "貸与グループ：" + escapeRosterText(label) + "</label>";
+    html += buildRosterCandidateHtml(candidate, true, index);
   });
   area.innerHTML = html;
   area._candidates = matchedCandidates;
 }
+
 function selectRosterCandidate(index) {
   const area = document.getElementById("rosterSearchResult");
   const candidates = area && Array.isArray(area._candidates) ? area._candidates : [];
@@ -2245,7 +2337,6 @@ function changeJob() {
 function updateDepartmentOptions() {
   const departmentArea = document.getElementById("departmentArea");
   const departmentSelect = document.getElementById("department");
-
   if (!departmentArea || !departmentSelect) return;
 
   if (!isDepartmentActive()) {
@@ -2256,46 +2347,41 @@ function updateDepartmentOptions() {
   }
 
   departmentArea.classList.remove("hidden");
-
   const job = document.getElementById("job").value;
   const gender = document.getElementById("gender").value;
-
   departmentSelect.innerHTML = '<option value="">選択</option>';
 
-  if (!currentData || !currentData.departments || !job || !gender) {
+  if (!currentData || !job || !gender) {
     departmentSelect.innerHTML =
       '<option value="">性別と職種を選択してください</option>';
     departmentSelect.disabled = true;
     return;
   }
 
-const departments = currentData.departments
-  .filter(d =>
-    d.active !== false &&
-    d.job === job &&
-    (!d.gender || d.gender === gender || d.gender === "兼用")
-  )
-  .sort((a, b) => (a.displayOrder || 9999) - (b.displayOrder || 9999))
-  .filter((d, index, array) =>
-    array.findIndex(x => x.department === d.department) === index
-  );
-
-
-  if (departments.length === 0) {
-    departmentSelect.innerHTML =
-      '<option value="">該当する部署なし</option>';
-    departmentSelect.disabled = true;
-    return;
-  }
+  const departments = (Array.isArray(currentData.departments) ? currentData.departments : [])
+    .filter(d =>
+      d.active !== false &&
+      d.job === job &&
+      (!d.gender || d.gender === gender || d.gender === "兼用")
+    )
+    .sort((a, b) => (a.displayOrder || 9999) - (b.displayOrder || 9999))
+    .filter((d, index, array) =>
+      array.findIndex(x => x.department === d.department) === index
+    );
 
   departmentSelect.disabled = false;
-
   departments.forEach(d => {
+    if (!d.department || d.department === "不明") return;
     const option = document.createElement("option");
     option.value = d.department;
     option.textContent = d.department;
     departmentSelect.appendChild(option);
   });
+
+  const unknownOption = document.createElement("option");
+  unknownOption.value = "不明";
+  unknownOption.textContent = "不明";
+  departmentSelect.appendChild(unknownOption);
 }
 
 function createTable(data, selectedJob, selectedGender) {
@@ -3725,11 +3811,11 @@ async function submitData(event) {
     ? document.getElementById("employeeNo").value.trim()
     : "";
   if (isEmployeeNoActive()) {
-    if (!employeeNo && !isRosterSearchEnabled()) {
+    if (!employeeNo) {
       alert("職員番号を入力してください");
       return;
     }
-    if (employeeNo && !validateEmployeeNoValue(employeeNo)) {
+    if (!validateEmployeeNoValue(employeeNo)) {
       alert("職員番号は半角英数字で入力してください");
       return;
     }
