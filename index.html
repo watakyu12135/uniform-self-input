@@ -3238,23 +3238,56 @@ function isCommonInseamHostRow(row) {
 function getCommonStandardInseamValue(row) {
   return String(commonStandardInseamValues[getCommonInseamKey(row)] || "").trim();
 }
-function updateCommonStandardInseam(input) {
-  sanitizeInseamInput(input);
-  const row = input.closest("tr.product-row");
+function updateCommonStandardInseam(control) {
+  if (!control) return;
+  if (control.tagName === "INPUT") sanitizeInseamInput(control);
+  const row = control.closest("tr.product-row");
   if (!row) return;
-  commonStandardInseamValues[getCommonInseamKey(row)] = String(input.value || "").trim();
+  let value = String(control.value || "").trim();
+  if (control.classList.contains("commonStandardInseamSelect")) {
+    const box = control.closest(".inseam-box");
+    const area = box ? box.querySelector(".inseam-exception-area") : null;
+    const input = area ? area.querySelector(".commonStandardInseamExceptionInput") : null;
+    const useException = value === "__INPUT__";
+    if (area) area.classList.toggle("hidden", !useException);
+    if (!useException && input) input.value = "";
+    value = useException ? String(input?.value || "").trim() : value;
+  }
+  commonStandardInseamValues[getCommonInseamKey(row)] = value;
 }
 function buildCommonStandardInseamHtml(row) {
   const rule = getRowInseamRule(row) || {};
   const mode = getRowInseamMode(row);
-  const help = mode === "STEP"
-    ? `${Number(rule.step)}cm単位（${Number(rule.step)}の倍数）で入力してください。`
-    : "股下加工が必要な場合は整数で入力してください。";
-  return `<div class="inseam-box" data-inseam-mode="${mode}">
+  const currentValue = getCommonStandardInseamValue(row);
+  if (mode === "STEP") {
+    const min = Number(rule.min), max = Number(rule.max), step = Number(rule.step);
+    const allowException = rule.allowException === true;
+    const standardValues = [];
+    if (Number.isInteger(min) && Number.isInteger(max) && Number.isInteger(step) && min > 0 && max >= min && step > 0) {
+      for (let value = min; value <= max; value += step) standardValues.push(value);
+    }
+    const currentNumber = Number(currentValue);
+    const isStandardValue = currentValue !== "" && standardValues.includes(currentNumber);
+    const isExceptionValue = allowException && currentValue !== "" && Number.isInteger(currentNumber) && (currentNumber < min || currentNumber > max);
+    let optionsHtml = `<option value="">選択してください</option>`;
+    standardValues.forEach(value => {
+      optionsHtml += `<option value="${value}"${isStandardValue && value === currentNumber ? " selected" : ""}>${value}cm</option>`;
+    });
+    if (allowException) optionsHtml += `<option value="__INPUT__"${isExceptionValue ? " selected" : ""}>入力</option>`;
+    return `<div class="inseam-box" data-inseam-mode="STEP">
+      <label>股下加工寸法</label><br>
+      <select class="commonStandardInseamInput commonStandardInseamSelect" onchange="updateCommonStandardInseam(this)">${optionsHtml}</select>
+      <div class="inseam-exception-area${isExceptionValue ? "" : " hidden"}">
+        <input type="text" class="commonStandardInseamExceptionInput" inputmode="numeric" pattern="[0-9]*" placeholder="cm" value="${isExceptionValue ? currentValue : ""}" oninput="updateCommonStandardInseam(this)"> cm
+        <div class="small inseam-help">${min}cm未満、または${max}cmを超える整数を入力してください。</div>
+      </div>
+      <div class="small inseam-help">股の付け根から裾までの長さを選択してください。<br>${min}cmから${max}cmまで、${step}cm刻みで選択できます。</div>
+    </div>`;
+  }
+  return `<div class="inseam-box" data-inseam-mode="FREE">
     <label>股下加工寸法</label><br>
-    <input type="text" class="commonStandardInseamInput" inputmode="numeric" pattern="[0-9]*" placeholder="cm"
-      value="${getCommonStandardInseamValue(row)}" oninput="updateCommonStandardInseam(this)"> cm
-    <div class="small inseam-help">股の付け根から裾までの長さを入力してください。<br>${help}</div>
+    <input type="text" class="commonStandardInseamInput" inputmode="numeric" pattern="[0-9]*" placeholder="cm" value="${currentValue}" oninput="updateCommonStandardInseam(this)"> cm
+    <div class="small inseam-help">股の付け根から裾までの長さを入力してください。<br>股下加工が必要な場合は整数で入力してください。</div>
   </div>`;
 }
 function buildFreeInseamHtml(helpText, modeName) {
@@ -3351,8 +3384,7 @@ function setInseamValueForRow(row, value) {
     const key = getCommonInseamKey(row);
     if (!commonStandardInseamValues[key]) commonStandardInseamValues[key] = normalized;
     const host = getRowsByProductCode(key)[0];
-    const input = host ? host.querySelector(".commonStandardInseamInput") : null;
-    if (input) input.value = commonStandardInseamValues[key];
+    if (host) updateInseamAreaForRow(host, true);
     return;
   }
   const select = row.querySelector(".inseamSelect");
@@ -3412,8 +3444,18 @@ function getInseamValidation(row, productName) {
   const mode = getRowInseamMode(row);
   const number = Number(value);
   if (mode === "STEP") {
+    const min = Number(rule.min);
+    const max = Number(rule.max);
     const step = Number(rule.step);
-    if (!step || number % step !== 0) return { value: "", error: `${productName} の股下加工寸法は、${step}cm単位（${step}の倍数）で入力してください。` };
+    if (!Number.isInteger(min) || !Number.isInteger(max) || !Number.isInteger(step) ||
+        min <= 0 || max < min || step <= 0) {
+      return { value: "", error: `${productName} の股下加工設定が正しくありません。` };
+    }
+    const isStandardValue = number >= min && number <= max && (number - min) % step === 0;
+    const isAllowedException = rule.allowException === true && (number < min || number > max);
+    if (!isStandardValue && !isAllowedException) {
+      return { value: "", error: `${productName} の例外入力は${min}cm未満、または${max}cmを超える整数を入力してください。範囲内は選択肢から選んでください。` };
+    }
   }
   if (["FREE", "STEP"].includes(mode)) {
     if (rule.min !== undefined && rule.min !== null && number < Number(rule.min)) return { value: "", error: `${productName} の股下加工寸法の最小値は${rule.min}cmです。股の付け根から裾までの長さを入力してください。` };
