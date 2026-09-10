@@ -1504,7 +1504,8 @@ function applyRosterCandidate(candidate) {
 
   // 職員番号を空欄で検索した場合だけ、名簿の職員番号を画面へ補完する。
   // 職員番号を入力して検索した場合は、PA側で整合確認済みのため上書きしない。
-  if (employeeNoInput && enteredEmployeeNo === "" && rosterEmployeeNo !== "") {
+  if (isEmployeeNoActive() && employeeNoInput &&
+      enteredEmployeeNo === "" && rosterEmployeeNo !== "") {
     employeeNoInput.value = rosterEmployeeNo;
   }
 
@@ -1582,7 +1583,9 @@ function renderRosterSearchResponse(json) {
   if (!area) return;
 
   const allCandidates = Array.isArray(json.candidates) ? json.candidates : [];
-  const enteredEmployeeNo = String(document.getElementById("employeeNo")?.value || "").trim();
+  const enteredEmployeeNo = isEmployeeNoActive()
+    ? String(document.getElementById("employeeNo")?.value || "").trim()
+    : "";
   const inputFullName = normalizeRosterCompareText(
     String(document.getElementById("sei").value || "") +
     String(document.getElementById("mei").value || "")
@@ -1716,7 +1719,9 @@ function selectRosterCandidate(index) {
 }
 async function searchRoster() {
   if (!currentData) { setRosterSearchResult("設定データを読み込み中です。", "error"); return; }
-  const employeeNo = document.getElementById("employeeNo")?.value.trim() || "";
+  const employeeNo = isEmployeeNoActive()
+    ? (document.getElementById("employeeNo")?.value.trim() || "")
+    : "";
   const sei = document.getElementById("sei").value.trim();
   const mei = document.getElementById("mei").value.trim();
   const seiKana = document.getElementById("seiKana").value.trim();
@@ -3807,7 +3812,7 @@ async function submitData(event) {
     event.preventDefault();
     event.stopPropagation();
   }
-  const employeeNo = document.getElementById("employeeNo")
+  const employeeNo = isEmployeeNoActive() && document.getElementById("employeeNo")
     ? document.getElementById("employeeNo").value.trim()
     : "";
   if (isEmployeeNoActive()) {
