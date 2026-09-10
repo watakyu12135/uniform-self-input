@@ -6,7 +6,7 @@
     {"name": "氏名", "active": true},
     {"name": "性別", "active": true},
     {"name": "職種", "active": true},
-    {"name": "部署", "active": true},
+    {"name": "部署", "active": false},
     {"name": "貸与パターン", "active": false},
     {"name": "名簿検索", "active": false}
   ],
