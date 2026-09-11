@@ -8,7 +8,7 @@
     {"name": "職種", "active": true},
     {"name": "部署", "active": false},
     {"name": "貸与パターン", "active": false},
-    {"name": "名簿検索", "active": false}
+    {"name": "名簿検索", "active": true}
   ],
   "inseamRules": {
     "SELECT": {
