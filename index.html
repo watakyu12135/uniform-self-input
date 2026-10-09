@@ -1596,21 +1596,19 @@ function getRosterCandidateValue(candidate, keys) {
 function buildRosterBasicInfoState(candidate, source = "roster") {
   const state = {
     source,
-    employeeNo: getRosterCandidateValue(candidate, ["employeeNo", "職員番号", "field_2"]),
-    sei: getRosterCandidateValue(candidate, ["sei", "姓", "氏", "field_3"]),
-    mei: getRosterCandidateValue(candidate, ["mei", "名", "field_4"]),
-    seiKana: getRosterCandidateValue(candidate, ["seiKana", "セイ", "field_5"]),
-    meiKana: getRosterCandidateValue(candidate, ["meiKana", "メイ", "field_6"]),
-    fullName: getRosterCandidateValue(candidate, ["fullName", "氏名", "姓名"]),
-    fullNameKana: getRosterCandidateValue(candidate, ["fullNameKana", "シメイ"]),
-    gender: getRosterCandidateValue(candidate, ["gender", "性別", "field_7"]),
-    job: getRosterCandidateValue(candidate, ["job", "職種", "field_8"]),
-    department: getRosterCandidateValue(candidate, ["department", "部署", "field_9"]),
-    lendingGroup: getRosterCandidateValue(candidate, ["lendingGroup", "貸与グループ"]),
-    lendingPatternCode: getRosterCandidateValue(candidate, ["lendingPatternCode", "assignedPatternCode", "貸与パターンコード", "貸与パターン"])
+    employeeNo: String(candidate?.employeeNo ?? "").trim(),
+    sei: String(candidate?.sei ?? "").trim(),
+    mei: String(candidate?.mei ?? "").trim(),
+    seiKana: String(candidate?.seiKana ?? "").trim(),
+    meiKana: String(candidate?.meiKana ?? "").trim(),
+    gender: String(candidate?.gender ?? "").trim(),
+    job: String(candidate?.job ?? "").trim(),
+    department: String(candidate?.department ?? "").trim(),
+    lendingGroup: String(candidate?.lendingGroup ?? "").trim(),
+    lendingPatternCode: String(candidate?.lendingPatternCode ?? candidate?.assignedPatternCode ?? "").trim()
   };
-  if (!state.fullName) state.fullName = `${state.sei}${state.mei}`;
-  if (!state.fullNameKana) state.fullNameKana = `${state.seiKana}${state.meiKana}`;
+  state.displayName = `${state.sei}${state.mei}`;
+  state.displayNameKana = `${state.seiKana}${state.meiKana}`;
   state.identityComplete = !!(state.sei && state.mei && state.seiKana && state.meiKana);
   return state;
 }
@@ -1628,34 +1626,24 @@ function buildManualBasicInfoState() {
     lendingGroup: "",
     lendingPatternCode: ""
   };
-  state.fullName = `${state.sei}${state.mei}`;
-  state.fullNameKana = `${state.seiKana}${state.meiKana}`;
+  state.displayName = `${state.sei}${state.mei}`;
+  state.displayNameKana = `${state.seiKana}${state.meiKana}`;
   state.identityComplete = !!(state.sei && state.mei && state.seiKana && state.meiKana);
   return state;
 }
 function writeBasicInfoStateToInputs(state) {
   if (!state) return false;
-  const setIfPresent = (id, value) => {
-    const element = document.getElementById(id);
-    const text = value === undefined || value === null ? "" : String(value).trim();
-    if (element && text) element.value = text;
-  };
-  setIfPresent("employeeNo", state.employeeNo);
-  setIfPresent("stepEmployeeNo", state.employeeNo);
-  setIfPresent("sei", state.sei);
-  setIfPresent("mei", state.mei);
-  setIfPresent("seiKana", state.seiKana);
-  setIfPresent("meiKana", state.meiKana);
-  setIfPresent("stepSei", state.sei);
-  setIfPresent("stepMei", state.mei);
-  setIfPresent("stepSeiKana", state.seiKana);
-  setIfPresent("stepMeiKana", state.meiKana);
-  return !!(
-    document.getElementById("sei").value.trim() &&
-    document.getElementById("mei").value.trim() &&
-    document.getElementById("seiKana").value.trim() &&
-    document.getElementById("meiKana").value.trim()
-  );
+  document.getElementById("employeeNo").value = state.employeeNo || "";
+  document.getElementById("stepEmployeeNo").value = state.employeeNo || "";
+  document.getElementById("sei").value = state.sei || "";
+  document.getElementById("mei").value = state.mei || "";
+  document.getElementById("seiKana").value = state.seiKana || "";
+  document.getElementById("meiKana").value = state.meiKana || "";
+  document.getElementById("stepSei").value = state.sei || "";
+  document.getElementById("stepMei").value = state.mei || "";
+  document.getElementById("stepSeiKana").value = state.seiKana || "";
+  document.getElementById("stepMeiKana").value = state.meiKana || "";
+  return state.identityComplete;
 }
 function setRosterBasicInfoState(candidate, source = "roster") {
   rosterBasicInfoState = source === "manual" ? buildManualBasicInfoState() : buildRosterBasicInfoState(candidate, source);
@@ -1684,8 +1672,8 @@ function fillStepDetails(candidate = null, source = "roster") {
   if (candidate) {
     summary.classList.remove("hidden");
     summary.innerHTML = `${isEmployeeNoActive() ? `職員番号：${escapeRosterText(state.employeeNo || "未登録")}<br>` : ""}` +
-      `姓名：${escapeRosterText(state.fullName)}<br>` +
-      `セイメイ：${escapeRosterText(state.fullNameKana)}<br>` +
+      `姓名：${escapeRosterText(state.displayName)}<br>` +
+      `セイメイ：${escapeRosterText(state.displayNameKana)}<br>` +
       `性別：${escapeRosterText(state.gender || "未登録")}<br>` +
       `職種：${escapeRosterText(state.job || "未登録")}<br>` +
       `部署：${escapeRosterText(state.department || "未登録")}`;
@@ -1698,9 +1686,26 @@ function fillStepDetails(candidate = null, source = "roster") {
   return true;
 }
 function renderCandidateSelection(cands){
- rosterStepCandidates=cands;const box=document.getElementById("rosterCandidateOptions");box.innerHTML='';
- cands.forEach((c,i)=>{const lab=document.createElement('label');lab.className='roster-candidate-select';lab.innerHTML=`<input type="radio" name="stepRosterCandidate" value="${i}">姓名：${escapeRosterText(c.fullName||'')}<br>セイメイ：${escapeRosterText(c.fullNameKana||'')}<br>性別：${escapeRosterText(c.gender||'未登録')}<br>職種：${escapeRosterText(c.job||'未登録')}<br>部署：${escapeRosterText(c.department||'未登録')}`;box.appendChild(lab);});
- const none=document.createElement('label');none.className='roster-candidate-select';none.innerHTML='<input type="radio" name="stepRosterCandidate" value="none">該当する登録がない';box.appendChild(none);setRosterStep('candidates');
+  rosterStepCandidates = cands;
+  const box = document.getElementById("rosterCandidateOptions");
+  box.innerHTML = "";
+  cands.forEach((candidate, index) => {
+    const state = buildRosterBasicInfoState(candidate, "candidate");
+    const label = document.createElement("label");
+    label.className = "roster-candidate-select";
+    label.innerHTML = `<input type="radio" name="stepRosterCandidate" value="${index}">` +
+      `姓名：${escapeRosterText(state.displayName)}<br>` +
+      `セイメイ：${escapeRosterText(state.displayNameKana)}<br>` +
+      `性別：${escapeRosterText(state.gender || "未登録")}<br>` +
+      `職種：${escapeRosterText(state.job || "未登録")}<br>` +
+      `部署：${escapeRosterText(state.department || "未登録")}`;
+    box.appendChild(label);
+  });
+  const none = document.createElement("label");
+  none.className = "roster-candidate-select";
+  none.innerHTML = '<input type="radio" name="stepRosterCandidate" value="none">該当する登録がない';
+  box.appendChild(none);
+  setRosterStep("candidates");
 }
 function applySelectedRosterCandidate(){
  const v=document.querySelector('input[name="stepRosterCandidate"]:checked')?.value;
@@ -1730,8 +1735,8 @@ function completeRosterStepDetails() {
   rosterBasicInfoState.department = department;
   rosterBasicInfoState.employeeNo = String(document.getElementById("stepEmployeeNo")?.value || rosterBasicInfoState.employeeNo || "").trim();
 
-  if (!rosterBasicInfoState.identityComplete && rosterBasicInfoState.source !== "employee") {
-    alert("姓名・セイメイを入力してください。");
+  if (!rosterBasicInfoState.identityComplete) {
+    alert("姓名・セイメイを取得できませんでした。名簿検索をやり直してください。");
     return;
   }
   if (!gender) { alert("性別を選択してください"); return; }
@@ -1856,6 +1861,8 @@ function resetRosterSearchForInputChange() {
 function applyRosterCandidate(candidate) {
   if (!candidate) return;
   rosterSearchCompleted = true;
+  const candidateState = buildRosterBasicInfoState(candidate, "candidate");
+  writeBasicInfoStateToInputs(candidateState);
 
   const employeeNoInput = document.getElementById("employeeNo");
   const enteredEmployeeNo = employeeNoInput
@@ -1917,24 +1924,17 @@ function normalizeRosterCompareText(value) {
 }
 
 function buildRosterCandidateHtml(candidate, withRadio = false, index = 0) {
-  const fullName = String(candidate.fullName ?? "").trim();
-  const fullNameKana = String(candidate.fullNameKana ?? "").trim();
-  const gender = String(candidate.gender ?? "").trim();
-  const job = String(candidate.job ?? "").trim();
-  const department = String(candidate.department ?? "").trim();
-  const lendingGroup = String(candidate.lendingGroup ?? "").trim();
-
+  const state = buildRosterBasicInfoState(candidate, "candidate");
   let html = withRadio
     ? '<label class="roster-candidate"><input type="radio" name="rosterCandidate" value="' + index +
       '" onchange="selectRosterCandidate(' + index + ')">'
     : '<div class="roster-candidate">';
-
-  html += "姓名：" + escapeRosterText(fullName) + "<br>";
-  html += "セイメイ：" + escapeRosterText(fullNameKana) + "<br>";
-  html += "性別：" + escapeRosterText(gender) + "<br>";
-  html += "職種：" + escapeRosterText(job);
-  if (department) html += "<br>部署：" + escapeRosterText(department);
-  if (lendingGroup) html += "<br>貸与グループ：" + escapeRosterText(lendingGroup);
+  html += "姓名：" + escapeRosterText(state.displayName) + "<br>";
+  html += "セイメイ：" + escapeRosterText(state.displayNameKana) + "<br>";
+  html += "性別：" + escapeRosterText(state.gender) + "<br>";
+  html += "職種：" + escapeRosterText(state.job);
+  if (state.department) html += "<br>部署：" + escapeRosterText(state.department);
+  if (state.lendingGroup) html += "<br>貸与グループ：" + escapeRosterText(state.lendingGroup);
   html += withRadio ? "</label>" : "</div>";
   return html;
 }
@@ -1975,7 +1975,7 @@ function renderRosterSearchResponse(json) {
     }
 
     const nameMatchedCandidates = allCandidates.filter(candidate =>
-      normalizeRosterCompareText(candidate.fullName) === inputFullName
+      normalizeRosterCompareText(String(candidate.sei ?? "") + String(candidate.mei ?? "")) === inputFullName
     );
     if (nameMatchedCandidates.length === 0) {
       rosterSearchCompleted = false;
