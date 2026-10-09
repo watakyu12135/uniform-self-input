@@ -1094,6 +1094,7 @@ tr.inseam-row .cell-inseam { display: block !important; margin: 0; padding: 0; b
     </div>
     <div id="lendingPatternArea" class="basic-select-field pattern-field hidden"><label>貸与パターン</label><div id="lendingPatternOptions" class="pattern-options"></div></div>
   </section>
+<div id="productSelectionArea">
 <div id="limitDeclarationArea"></div>
 
 <div class="table-wrap">
@@ -1107,6 +1108,7 @@ tr.inseam-row .cell-inseam { display: block !important; margin: 0; padding: 0; b
   <button type="button" id="backToBasicInfoButton" class="secondary-action hidden" onclick="backToBasicInfoFromProducts()">戻る</button>
 </div>
 
+</div>
 </div>
 <div id="measurementArea" class="hidden measurement-area">
 
@@ -1338,6 +1340,11 @@ let rosterStepCandidates = [];
 let currentBasicInfoFixed = false;
 
 function isRosterManagementActive() { return isBasicInfoActive("名簿管理") || isBasicInfoActive("名簿検索"); }
+function setProductSelectionVisible(visible) {
+  const area = document.getElementById("productSelectionArea");
+  if (area) area.classList.toggle("hidden", !visible);
+}
+
 function getOppositeUniformType(gender) { return gender === "男性" ? "女性" : gender === "女性" ? "男性" : ""; }
 function getUniformTypeGender() {
   const gender=String(document.getElementById("gender")?.value||"").trim();
@@ -1524,7 +1531,13 @@ function setupBasicInfoVisibility() {
  const dep=document.getElementById("departmentArea"); const depSel=document.getElementById("department");
  if(isDepartmentActive()){dep.classList.remove("hidden");document.getElementById("departmentHelp").classList.remove("hidden");if(depSel.options.length<=1){depSel.innerHTML='<option value="">性別と職種を選択してください</option>';depSel.disabled=true;}}
  else{dep.classList.add("hidden");document.getElementById("departmentHelp").classList.add("hidden");}
- updateUniformTypeStatus(); if(useSteps) initializeRosterSteps();
+ updateUniformTypeStatus();
+ if (useSteps) {
+   setProductSelectionVisible(false);
+   initializeRosterSteps();
+ } else {
+   setProductSelectionVisible(true);
+ }
 }
 function renderStepProgress(active){
  const items=isEmployeeNoActive()?[['employee','1 職員番号'],['name','2 姓名・セイメイ'],['details','3 基本情報の確認']]:[['name','1 姓名・セイメイ'],['details','2 基本情報の確認']];
@@ -1532,7 +1545,9 @@ function renderStepProgress(active){
  items.forEach(([key,label])=>{const e=document.createElement("span");e.textContent=label;e.classList.toggle("active",key===active);area.appendChild(e);});
 }
 function setRosterStep(step){
- rosterStepCurrent=step; renderStepProgress(step==='candidates'?'name':step);
+ rosterStepCurrent=step;
+ setProductSelectionVisible(false);
+ renderStepProgress(step==='candidates'?'name':step);
  document.getElementById("rosterStepEmployee").classList.toggle("hidden",step!=="employee");
  document.getElementById("rosterStepName").classList.toggle("hidden",step!=="name");
  document.getElementById("rosterStepCandidates").classList.toggle("hidden",step!=="candidates");
@@ -1568,18 +1583,38 @@ function populateStepDepartments(selected=""){
  const un=document.createElement('option');un.value='不明';un.textContent='不明';sel.appendChild(un);addMissingOption(sel,selected);sel.value=selected;
 }
 function getRosterCandidateValue(candidate, keys) {
-  for (const key of keys) {
-    const value = candidate?.[key];
-    if (value !== undefined && value !== null && String(value).trim() !== "") return String(value).trim();
+  const sources = [candidate, candidate?.raw, candidate?.item, candidate?.fields];
+  for (const source of sources) {
+    for (const key of keys) {
+      const value = source?.[key];
+      if (value !== undefined && value !== null && String(value).trim() !== "") return String(value).trim();
+    }
   }
   return "";
 }
+function splitRosterCombinedName(value) {
+  const text = String(value || "").trim();
+  const parts = text.split(/[\s\u3000]+/).filter(Boolean);
+  return parts.length >= 2 ? [parts[0], parts.slice(1).join("")] : ["", ""];
+}
 function applyCandidateIdentityToInputs(candidate) {
   const employeeNo = getRosterCandidateValue(candidate, ["employeeNo", "職員番号", "field_2"]);
-  const sei = getRosterCandidateValue(candidate, ["sei", "姓", "氏", "field_3"]);
-  const mei = getRosterCandidateValue(candidate, ["mei", "名", "field_4"]);
-  const seiKana = getRosterCandidateValue(candidate, ["seiKana", "セイ", "field_5"]);
-  const meiKana = getRosterCandidateValue(candidate, ["meiKana", "メイ", "field_6"]);
+  let sei = getRosterCandidateValue(candidate, ["sei", "姓", "氏", "field_3"]);
+  let mei = getRosterCandidateValue(candidate, ["mei", "名", "field_4"]);
+  let seiKana = getRosterCandidateValue(candidate, ["seiKana", "セイ", "field_5"]);
+  let meiKana = getRosterCandidateValue(candidate, ["meiKana", "メイ", "field_6"]);
+
+  if (!sei || !mei) {
+    const split = splitRosterCombinedName(getRosterCandidateValue(candidate, ["fullName", "氏名", "姓名"]));
+    if (!sei) sei = split[0];
+    if (!mei) mei = split[1];
+  }
+  if (!seiKana || !meiKana) {
+    const splitKana = splitRosterCombinedName(getRosterCandidateValue(candidate, ["fullNameKana", "シメイ"]));
+    if (!seiKana) seiKana = splitKana[0];
+    if (!meiKana) meiKana = splitKana[1];
+  }
+
   if (employeeNo) {
     document.getElementById("employeeNo").value = employeeNo;
     document.getElementById("stepEmployeeNo").value = employeeNo;
@@ -1589,6 +1624,11 @@ function applyCandidateIdentityToInputs(candidate) {
   if (seiKana) document.getElementById("stepSeiKana").value = seiKana;
   if (meiKana) document.getElementById("stepMeiKana").value = meiKana;
   copyStepNamesToMain();
+
+  return !!(document.getElementById("sei").value.trim() &&
+            document.getElementById("mei").value.trim() &&
+            document.getElementById("seiKana").value.trim() &&
+            document.getElementById("meiKana").value.trim());
 }
 function fillStepDetails(c=null){
  rosterStepLastCandidate=c;
@@ -1617,7 +1657,14 @@ function syncStepDetails(){
  populateStepDepartments(oldDep);document.getElementById("gender").value=document.getElementById("stepGender").value;document.getElementById("alternateUniformType").checked=document.getElementById("stepAlternateUniform").checked;updateUniformTypeStatus();
 }
 function completeRosterStepDetails(){
- const g=document.getElementById("stepGender").value,j=document.getElementById("stepJob").value,d=isDepartmentActive()?document.getElementById("stepDepartment").value:'';if(!g){alert('性別を選択してください');return;}if(!j){alert('職種を選択してください');return;}if(isDepartmentActive()&&!d){alert('部署を選択してください');return;}
+ const g=document.getElementById("stepGender").value,j=document.getElementById("stepJob").value,d=isDepartmentActive()?document.getElementById("stepDepartment").value:'';
+ if (rosterStepLastCandidate) applyCandidateIdentityToInputs(rosterStepLastCandidate);
+ else copyStepNamesToMain();
+ const identityOk = document.getElementById("sei").value.trim() && document.getElementById("mei").value.trim() && document.getElementById("seiKana").value.trim() && document.getElementById("meiKana").value.trim();
+ if(!identityOk){alert('姓名・セイメイを取得できませんでした。戻って名簿を検索し直してください。');return;}
+ if(!g){alert('性別を選択してください');return;}
+ if(!j){alert('職種を選択してください');return;}
+ if(isDepartmentActive()&&!d){alert('部署を選択してください');return;}
  copyStepNamesToMain();
  document.getElementById("employeeNo").value=document.getElementById("stepEmployeeNo").value||document.getElementById("employeeNo").value;
  document.getElementById("gender").value=g;document.getElementById("alternateUniformType").checked=document.getElementById("stepAlternateUniform").checked;updateUniformTypeStatus();updateJobOptions();addMissingOption(document.getElementById('job'),j);document.getElementById('job').value=j;updateDepartmentOptions();addMissingOption(document.getElementById('department'),d);document.getElementById('department').value=d;
@@ -1626,9 +1673,11 @@ function completeRosterStepDetails(){
  ['employeeNo','sei','mei','seiKana','meiKana','gender','job','department'].forEach(id=>{const e=document.getElementById(id);if(e){e.disabled=true;e.style.backgroundColor='#eee';}});
  document.getElementById('alternateUniformType').disabled=false;document.getElementById('alternateUniformType').style.backgroundColor='';
  document.getElementById('backToBasicInfoButton')?.classList.remove('hidden');
+ setProductSelectionVisible(true);
 }
 function backToBasicInfoFromProducts() {
   if (!isRosterManagementActive()) return;
+  setProductSelectionVisible(false);
   document.getElementById('standardBasicInfoUi').classList.add('hidden');
   document.getElementById('rosterStepUi').classList.remove('hidden');
   document.getElementById('stepEmployeeNo').value=document.getElementById('employeeNo').value;
