@@ -18,10 +18,10 @@ label { font-weight: bold; display: block; margin-top: 10px; }
 .item { padding: 8px; background: #f9f9f9; margin-top: 6px; }
 .alternate-uniform-warning {
   margin: 8px 0 14px;
-  padding: 10px 12px;
-  border-left: 5px solid #e58a00;
-  background: #fff4dd;
-  color: #9a4f00;
+  padding: 11px 13px;
+  border-left: 6px solid #d32f2f;
+  background: #ffebee;
+  color: #b71c1c;
   font-size: 16px;
   font-weight: 700;
   line-height: 1.5;
@@ -159,7 +159,7 @@ body.sending-locked { overflow: hidden; }
 <div class="section">
   <h3>商品選択内容</h3>
   <div id="alternateUniformWarning" class="alternate-uniform-warning hidden" role="status">
-    登録された性別と異なるユニフォームが選択されています
+    登録された性別と異なる性別のユニフォームを選択しています
   </div>
   <div id="orderArea"></div>
 </div>
@@ -413,9 +413,7 @@ document.getElementById("fullNameKana").innerText =
     Number(first["異性ユニフォーム選択"] || 0) === 1 ||
     !!(registeredGender && selectedUniformType && registeredGender !== selectedUniformType);
   const alternateWarning = document.getElementById("alternateUniformWarning");
-  if (alternateWarning) {
-    alternateWarning.classList.toggle("hidden", !alternateUniformSelected);
-  }
+  if (alternateWarning) alternateWarning.classList.toggle("hidden", !alternateUniformSelected);
   const lendingPattern = first["貸与パターン名"] || "";
   const lendingPatternRow = document.getElementById("lendingPatternRow");
   if (lendingPattern) {
