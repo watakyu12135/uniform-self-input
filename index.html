@@ -1584,31 +1584,14 @@ function populateStepDepartments(selected=""){
  const un=document.createElement('option');un.value='不明';un.textContent='不明';sel.appendChild(un);addMissingOption(sel,selected);sel.value=selected;
 }
 function getRosterCandidateValue(candidate, keys) {
-  const wanted = new Set(keys.map(key => String(key).toLowerCase()));
-  const visited = new Set();
-  function findDeep(value, depth = 0) {
-    if (value === null || value === undefined || depth > 8) return "";
-    if (typeof value === "string") {
-      const text = value.trim();
-      if ((text.startsWith("{") || text.startsWith("[")) && text.length < 200000) {
-        try { return findDeep(JSON.parse(text), depth + 1); } catch (_) {}
-      }
-      return "";
+  const sources = [candidate, candidate?.raw, candidate?.item, candidate?.fields];
+  for (const source of sources) {
+    for (const key of keys) {
+      const value = source?.[key];
+      if (value !== undefined && value !== null && String(value).trim() !== "") return String(value).trim();
     }
-    if (typeof value !== "object" || visited.has(value)) return "";
-    visited.add(value);
-    for (const [key, item] of Object.entries(value)) {
-      if (wanted.has(String(key).toLowerCase()) && item !== null && item !== undefined && String(item).trim() !== "") {
-        return String(item).trim();
-      }
-    }
-    for (const item of Object.values(value)) {
-      const found = findDeep(item, depth + 1);
-      if (found) return found;
-    }
-    return "";
   }
-  return findDeep(candidate);
+  return "";
 }
 function buildRosterBasicInfoState(candidate, source = "roster") {
   const state = {
@@ -1652,17 +1635,27 @@ function buildManualBasicInfoState() {
 }
 function writeBasicInfoStateToInputs(state) {
   if (!state) return false;
-  document.getElementById("employeeNo").value = state.employeeNo || "";
-  document.getElementById("stepEmployeeNo").value = state.employeeNo || "";
-  document.getElementById("sei").value = state.sei || "";
-  document.getElementById("mei").value = state.mei || "";
-  document.getElementById("seiKana").value = state.seiKana || "";
-  document.getElementById("meiKana").value = state.meiKana || "";
-  document.getElementById("stepSei").value = state.sei || "";
-  document.getElementById("stepMei").value = state.mei || "";
-  document.getElementById("stepSeiKana").value = state.seiKana || "";
-  document.getElementById("stepMeiKana").value = state.meiKana || "";
-  return state.identityComplete;
+  const setIfPresent = (id, value) => {
+    const element = document.getElementById(id);
+    const text = value === undefined || value === null ? "" : String(value).trim();
+    if (element && text) element.value = text;
+  };
+  setIfPresent("employeeNo", state.employeeNo);
+  setIfPresent("stepEmployeeNo", state.employeeNo);
+  setIfPresent("sei", state.sei);
+  setIfPresent("mei", state.mei);
+  setIfPresent("seiKana", state.seiKana);
+  setIfPresent("meiKana", state.meiKana);
+  setIfPresent("stepSei", state.sei);
+  setIfPresent("stepMei", state.mei);
+  setIfPresent("stepSeiKana", state.seiKana);
+  setIfPresent("stepMeiKana", state.meiKana);
+  return !!(
+    document.getElementById("sei").value.trim() &&
+    document.getElementById("mei").value.trim() &&
+    document.getElementById("seiKana").value.trim() &&
+    document.getElementById("meiKana").value.trim()
+  );
 }
 function setRosterBasicInfoState(candidate, source = "roster") {
   rosterBasicInfoState = source === "manual" ? buildManualBasicInfoState() : buildRosterBasicInfoState(candidate, source);
@@ -1682,6 +1675,9 @@ function fillStepDetails(candidate = null, source = "roster") {
     state.employeeNo = state.employeeNo || String(document.getElementById("stepEmployeeNo")?.value || "").trim();
     rosterBasicInfoState = state;
     rosterStepLastCandidate = candidate;
+  } else if (candidate && !state.identityComplete) {
+    setStepResult("姓名・セイメイを入力してください。", "warning");
+    return false;
   }
   applyStateDetailsToStep(state);
   const summary = document.getElementById("rosterStepSummary");
@@ -1718,6 +1714,12 @@ function syncStepDetails(){
  populateStepDepartments(oldDep);document.getElementById("gender").value=document.getElementById("stepGender").value;document.getElementById("alternateUniformType").checked=document.getElementById("stepAlternateUniform").checked;updateUniformTypeStatus();
 }
 function completeRosterStepDetails() {
+  if (rosterStepLastCandidate && rosterBasicInfoState?.source === "employee") {
+    const refreshed = buildRosterBasicInfoState(rosterStepLastCandidate, "employee");
+    for (const [key, value] of Object.entries(refreshed)) {
+      if (value !== "" && value !== null && value !== undefined) rosterBasicInfoState[key] = value;
+    }
+  }
   const gender = document.getElementById("stepGender").value;
   const job = document.getElementById("stepJob").value;
   const department = isDepartmentActive() ? document.getElementById("stepDepartment").value : "";
@@ -1737,10 +1739,6 @@ function completeRosterStepDetails() {
   if (isDepartmentActive() && !department) { alert("部署を選択してください"); return; }
 
   writeBasicInfoStateToInputs(rosterBasicInfoState);
-  if (rosterBasicInfoState.source === "employee" && !rosterBasicInfoState.identityComplete) {
-    document.getElementById("sei").dataset.fullName = rosterBasicInfoState.fullName || "";
-    document.getElementById("seiKana").dataset.fullNameKana = rosterBasicInfoState.fullNameKana || "";
-  }
   document.getElementById("gender").value = gender;
   document.getElementById("alternateUniformType").checked = document.getElementById("stepAlternateUniform").checked;
   updateUniformTypeStatus();
