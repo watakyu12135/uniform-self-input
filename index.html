@@ -1339,11 +1339,29 @@ let rosterStepLastCandidate = null;
 let rosterStepCandidates = [];
 let currentBasicInfoFixed = false;
 let rosterBasicInfoState = null;
+let confirmReturnStep3Active = false;
+let confirmReturnBasicSignature = "";
 
 function isRosterManagementActive() { return isBasicInfoActive("名簿管理") || isBasicInfoActive("名簿検索"); }
 function setProductSelectionVisible(visible) {
   const area = document.getElementById("productSelectionArea");
   if (area) area.classList.toggle("hidden", !visible);
+}
+function getStep3BasicSignature() {
+  return JSON.stringify({
+    employeeNo: String(document.getElementById("stepEmployeeNo")?.value || "").trim(),
+    sei: String(document.getElementById("stepSei")?.value || "").trim(),
+    mei: String(document.getElementById("stepMei")?.value || "").trim(),
+    seiKana: String(document.getElementById("stepSeiKana")?.value || "").trim(),
+    meiKana: String(document.getElementById("stepMeiKana")?.value || "").trim(),
+    gender: String(document.getElementById("stepGender")?.value || "").trim(),
+    alternateUniform: document.getElementById("stepAlternateUniform")?.checked === true,
+    job: String(document.getElementById("stepJob")?.value || "").trim(),
+    department: String(document.getElementById("stepDepartment")?.value || "").trim()
+  });
+}
+function showConfirmedBasicInfoAndProducts() {
+  showConfirmedBasicInfoAndProducts();
 }
 
 function getOppositeUniformType(gender) { return gender === "男性" ? "女性" : gender === "女性" ? "男性" : ""; }
@@ -1754,6 +1772,17 @@ function completeRosterStepDetails() {
   addMissingOption(document.getElementById("department"), department);
   document.getElementById("department").value = department;
 
+  const returnedBasicInfoUnchanged =
+    confirmReturnStep3Active &&
+    confirmReturnBasicSignature &&
+    getStep3BasicSignature() === confirmReturnBasicSignature;
+  if (returnedBasicInfoUnchanged) {
+    confirmReturnStep3Active = false;
+    rosterSearchCompleted = true;
+    showConfirmedBasicInfoAndProducts();
+    return;
+  }
+  confirmReturnStep3Active = false;
   rosterSearchCompleted = true;
   currentLendingGroup = String(rosterBasicInfoState.lendingGroup || "").trim();
   const code = String(rosterBasicInfoState.lendingPatternCode || "").trim();
@@ -2249,6 +2278,41 @@ function shouldRestoreConfirmDraft() {
     /(^|\/)confirm\.html(?:\?|$)/i.test(document.referrer || "");
 }
 
+function restoreConfirmReturnToStep3(base) {
+  if (!isRosterManagementActive() || effectiveEditMode) return;
+  const candidate = {
+    employeeNo: getFirstStoredValue(base, ["職員番号", "employeeNo", "staffNo"]),
+    sei: getFirstStoredValue(base, ["姓", "氏", "sei"]),
+    mei: getFirstStoredValue(base, ["名", "mei"]),
+    seiKana: getFirstStoredValue(base, ["セイ", "シ", "seiKana"]),
+    meiKana: getFirstStoredValue(base, ["メイ", "meiKana"]),
+    gender: getFirstStoredValue(base, ["性別", "gender"]),
+    job: getFirstStoredValue(base, ["職種", "job"]),
+    department: getFirstStoredValue(base, ["部署", "department"]),
+    lendingGroup: getFirstStoredValue(base, ["登録貸与グループ", "貸与グループ", "lendingGroup"]),
+    lendingPatternCode: getFirstStoredValue(base, ["貸与パターンコード", "lendingPatternCode"])
+  };
+  const source = candidate.employeeNo && candidate.employeeNo !== "000000" ? "employee" : "name";
+  rosterStepSource = source;
+  rosterStepLastCandidate = candidate;
+  rosterBasicInfoState = buildRosterBasicInfoState(candidate, source);
+  fillStepDetails(candidate, source);
+  const storedUniformType = getFirstStoredValue(base, ["ユニフォームタイプ", "uniformType"]) || candidate.gender;
+  const alternateSelected =
+    base.alternateUniformSelected === true ||
+    base.alternateUniformSelected === 1 ||
+    String(base.alternateUniformSelected || "").toLowerCase() === "true" ||
+    Number(base["異性ユニフォーム選択"] || 0) === 1 ||
+    !!(candidate.gender && storedUniformType && candidate.gender !== storedUniformType);
+  document.getElementById("stepAlternateUniform").checked = alternateSelected;
+  updateUniformTypeStatus();
+  document.getElementById("standardBasicInfoUi").classList.add("hidden");
+  document.getElementById("rosterStepUi").classList.remove("hidden");
+  setProductSelectionVisible(false);
+  setRosterStep("details");
+  confirmReturnStep3Active = true;
+  confirmReturnBasicSignature = getStep3BasicSignature();
+}
 function applyConfirmReturnData() {
   const returnDraft = getConfirmDraft();
   if (!returnDraft) return;
@@ -2324,6 +2388,7 @@ function applyConfirmReturnData() {
   updateCategorySummary();
   updateAllMeasurementButtons();
   updateAllInseamAreas();
+  if (!returnEditMode) restoreConfirmReturnToStep3(base);
 }
 
 function applyEditModeData() {
