@@ -1361,9 +1361,21 @@ function getStep3BasicSignature() {
   });
 }
 function showConfirmedBasicInfoAndProducts() {
-  showConfirmedBasicInfoAndProducts();
+  document.getElementById("rosterStepUi").classList.add("hidden");
+  document.getElementById("standardBasicInfoUi").classList.remove("hidden");
+  currentBasicInfoFixed = true;
+  ["employeeNo", "sei", "mei", "seiKana", "meiKana", "gender", "job", "department"].forEach(id => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.disabled = true;
+      element.style.backgroundColor = "#eee";
+    }
+  });
+  document.getElementById("alternateUniformType").disabled = false;
+  document.getElementById("alternateUniformType").style.backgroundColor = "";
+  document.getElementById("backToBasicInfoButton")?.classList.remove("hidden");
+  setProductSelectionVisible(true);
 }
-
 function getOppositeUniformType(gender) { return gender === "男性" ? "女性" : gender === "女性" ? "男性" : ""; }
 function getUniformTypeGender() {
   const gender=String(document.getElementById("gender")?.value||"").trim();
@@ -1746,13 +1758,11 @@ function completeRosterStepDetails() {
   const gender = document.getElementById("stepGender").value;
   const job = document.getElementById("stepJob").value;
   const department = isDepartmentActive() ? document.getElementById("stepDepartment").value : "";
-
   if (!rosterBasicInfoState) rosterBasicInfoState = buildManualBasicInfoState();
   rosterBasicInfoState.gender = gender;
   rosterBasicInfoState.job = job;
   rosterBasicInfoState.department = department;
   rosterBasicInfoState.employeeNo = String(document.getElementById("stepEmployeeNo")?.value || rosterBasicInfoState.employeeNo || "").trim();
-
   if (!rosterBasicInfoState.identityComplete) {
     alert("姓名・セイメイを取得できませんでした。名簿検索をやり直してください。");
     return;
@@ -1760,7 +1770,6 @@ function completeRosterStepDetails() {
   if (!gender) { alert("性別を選択してください"); return; }
   if (!job) { alert("職種を選択してください"); return; }
   if (isDepartmentActive() && !department) { alert("部署を選択してください"); return; }
-
   writeBasicInfoStateToInputs(rosterBasicInfoState);
   document.getElementById("gender").value = gender;
   document.getElementById("alternateUniformType").checked = document.getElementById("stepAlternateUniform").checked;
@@ -1772,22 +1781,24 @@ function completeRosterStepDetails() {
   addMissingOption(document.getElementById("department"), department);
   document.getElementById("department").value = department;
 
-  const returnedBasicInfoUnchanged =
-    confirmReturnStep3Active &&
-    confirmReturnBasicSignature &&
-    getStep3BasicSignature() === confirmReturnBasicSignature;
-  if (returnedBasicInfoUnchanged) {
-    confirmReturnStep3Active = false;
-    rosterSearchCompleted = true;
-    showConfirmedBasicInfoAndProducts();
-    return;
-  }
+  const returnedFromConfirm = confirmReturnStep3Active;
   confirmReturnStep3Active = false;
   rosterSearchCompleted = true;
   currentLendingGroup = String(rosterBasicInfoState.lendingGroup || "").trim();
-  const code = String(rosterBasicInfoState.lendingPatternCode || "").trim();
+  const code = returnedFromConfirm ? "" : String(rosterBasicInfoState.lendingPatternCode || "").trim();
   const hasPatterns = updateLendingPatternOptions(code);
-  if (code) {
+
+  if (returnedFromConfirm) {
+    lastAcceptedLendingPatternCode = "";
+    document.querySelectorAll('input[name="lendingPattern"]').forEach(input => {
+      input.checked = false;
+      input.disabled = false;
+    });
+    clearCurrentProductSelection(true);
+    document.getElementById("table").innerHTML = "<tr><td colspan='7'>貸与パターンを選択してください</td></tr>";
+    document.getElementById("categoryStatus").innerHTML = "";
+    document.getElementById("limitDeclarationArea").innerHTML = "";
+  } else if (code) {
     document.querySelectorAll('input[name="lendingPattern"]').forEach(input => {
       input.checked = input.value === code;
       input.disabled = input.value !== code;
@@ -1798,21 +1809,7 @@ function completeRosterStepDetails() {
   } else {
     createTable(currentData, job, getUniformTypeGender());
   }
-
-  document.getElementById("rosterStepUi").classList.add("hidden");
-  document.getElementById("standardBasicInfoUi").classList.remove("hidden");
-  currentBasicInfoFixed = true;
-  ["employeeNo", "sei", "mei", "seiKana", "meiKana", "gender", "job", "department"].forEach(id => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.disabled = true;
-      element.style.backgroundColor = "#eee";
-    }
-  });
-  document.getElementById("alternateUniformType").disabled = false;
-  document.getElementById("alternateUniformType").style.backgroundColor = "";
-  document.getElementById("backToBasicInfoButton")?.classList.remove("hidden");
-  setProductSelectionVisible(true);
+  showConfirmedBasicInfoAndProducts();
 }
 function backToBasicInfoFromProducts() {
   if (!isRosterManagementActive()) return;
@@ -2308,6 +2305,9 @@ function restoreConfirmReturnToStep3(base) {
   updateUniformTypeStatus();
   document.getElementById("standardBasicInfoUi").classList.add("hidden");
   document.getElementById("rosterStepUi").classList.remove("hidden");
+  document.getElementById("lendingPatternArea").classList.add("hidden");
+  document.getElementById("lendingPatternOptions").innerHTML = "";
+  lastAcceptedLendingPatternCode = "";
   setProductSelectionVisible(false);
   setRosterStep("details");
   confirmReturnStep3Active = true;
@@ -2355,9 +2355,15 @@ function applyConfirmReturnData() {
   changeJob();
   currentLendingGroup = lendingGroupValue;
   rosterSearchCompleted = true;
-  updateLendingPatternOptions(lendingPatternCode);
-  lastAcceptedLendingPatternCode = lendingPatternCode;
-  if (lendingPatternCode) changeLendingPattern();
+  if (returnEditMode) {
+    updateLendingPatternOptions(lendingPatternCode);
+    lastAcceptedLendingPatternCode = lendingPatternCode;
+    if (lendingPatternCode) changeLendingPattern();
+  } else {
+    document.getElementById("lendingPatternArea").classList.add("hidden");
+    document.getElementById("lendingPatternOptions").innerHTML = "";
+    lastAcceptedLendingPatternCode = "";
+  }
   const departmentSelect = document.getElementById("department");
   if (departmentSelect) {
     addMissingOption(departmentSelect, departmentValue);
@@ -2365,7 +2371,7 @@ function applyConfirmReturnData() {
   }
 
   restoreMeasurementFromEditData(returnDraft.measurement);
-  restoreOrdersFromEditData(returnDraft.orders);
+  if (returnEditMode) restoreOrdersFromEditData(returnDraft.orders);
 
   if (returnEditMode) {
     const title = document.getElementById("pageTitle");
