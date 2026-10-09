@@ -1575,11 +1575,11 @@ function getRosterCandidateValue(candidate, keys) {
   return "";
 }
 function applyCandidateIdentityToInputs(candidate) {
-  const employeeNo = getRosterCandidateValue(candidate, ["employeeNo", "職員番号"]);
-  const sei = getRosterCandidateValue(candidate, ["sei", "姓", "氏"]);
-  const mei = getRosterCandidateValue(candidate, ["mei", "名"]);
-  const seiKana = getRosterCandidateValue(candidate, ["seiKana", "セイ"]);
-  const meiKana = getRosterCandidateValue(candidate, ["meiKana", "メイ"]);
+  const employeeNo = getRosterCandidateValue(candidate, ["employeeNo", "職員番号", "field_2"]);
+  const sei = getRosterCandidateValue(candidate, ["sei", "姓", "氏", "field_3"]);
+  const mei = getRosterCandidateValue(candidate, ["mei", "名", "field_4"]);
+  const seiKana = getRosterCandidateValue(candidate, ["seiKana", "セイ", "field_5"]);
+  const meiKana = getRosterCandidateValue(candidate, ["meiKana", "メイ", "field_6"]);
   if (employeeNo) {
     document.getElementById("employeeNo").value = employeeNo;
     document.getElementById("stepEmployeeNo").value = employeeNo;
@@ -1593,12 +1593,12 @@ function applyCandidateIdentityToInputs(candidate) {
 function fillStepDetails(c=null){
  rosterStepLastCandidate=c;
  if(c) applyCandidateIdentityToInputs(c);
- const candidateGender=getRosterCandidateValue(c,["gender","性別"]);
- const candidateJob=getRosterCandidateValue(c,["job","職種"]);
- const candidateDepartment=getRosterCandidateValue(c,["department","部署"]);
+ const candidateGender=getRosterCandidateValue(c,["gender","性別","field_7"]);
+ const candidateJob=getRosterCandidateValue(c,["job","職種","field_8"]);
+ const candidateDepartment=getRosterCandidateValue(c,["department","部署","field_9"]);
  document.getElementById("stepGender").value=candidateGender;document.getElementById("stepAlternateUniform").checked=false;populateStepJobs(candidateJob);populateStepDepartments(candidateDepartment);
  const sum=document.getElementById("rosterStepSummary");if(c){
-   const employeeNo=getRosterCandidateValue(c,["employeeNo","職員番号"])||document.getElementById("employeeNo").value;
+   const employeeNo=getRosterCandidateValue(c,["employeeNo","職員番号","field_2"])||document.getElementById("employeeNo").value;
    const fullName=getRosterCandidateValue(c,["fullName","氏名","姓名"])||`${document.getElementById("stepSei").value}${document.getElementById("stepMei").value}`;
    const fullNameKana=getRosterCandidateValue(c,["fullNameKana","シメイ"])||`${document.getElementById("stepSeiKana").value}${document.getElementById("stepMeiKana").value}`;
    sum.classList.remove('hidden');sum.innerHTML=`${isEmployeeNoActive()?`職員番号：${escapeRosterText(employeeNo||'未登録')}<br>`:''}姓名：${escapeRosterText(fullName||'')}<br>セイメイ：${escapeRosterText(fullNameKana||'')}<br>性別：${escapeRosterText(candidateGender||'未登録')}<br>職種：${escapeRosterText(candidateJob||'未登録')}<br>部署：${escapeRosterText(candidateDepartment||'未登録')}`;
