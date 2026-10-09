@@ -99,8 +99,29 @@ button {
 .roster-step-panel { padding:16px; border:1px solid #cfd6df; border-radius:10px; background:#f8fafc; }
 .roster-step-panel h3 { margin:0 0 8px; }
 .step-help { margin:0 0 14px; color:#4c5b68; line-height:1.6; }
-.step-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+.step-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:14px; }
 .step-actions button { min-width:140px; padding:9px 18px; }
+.step-actions .primary-action {
+  order:1;
+  min-width:140px;
+  padding:10px 20px;
+  background:#2f7fd3;
+  color:#fff;
+  border:1px solid #2369b1;
+  font-weight:700;
+}
+.step-actions .primary-action:hover { background:#246fbd; }
+.step-actions .secondary-action {
+  order:2;
+  min-width:auto;
+  padding:6px 14px;
+  background:#fff;
+  color:#4f5e6d;
+  border:1px solid #aeb8c2;
+  font-size:13px;
+  font-weight:400;
+}
+.step-actions .secondary-action:hover { background:#f3f5f7; }
 .roster-confirm-list { margin:12px 0; padding:12px; border:1px solid #b8c8d8; border-radius:8px; background:#fff; line-height:1.7; }
 .uniform-type-choice { margin:-8px 0 18px 90px; max-width:520px; }
 .uniform-type-choice label { display:flex; align-items:flex-start; gap:8px; font-weight:700; line-height:1.45; }
@@ -113,8 +134,16 @@ button {
  .roster-step-progress { gap:5px; }
  .roster-step-progress span { font-size:12px; }
  .roster-step-panel { padding:13px; }
- .step-actions { display:block; }
+ .step-actions { display:flex; flex-direction:column; align-items:stretch; }
  .step-actions button { display:block; width:100%; margin-top:8px; }
+ .step-actions .primary-action { order:1; }
+ .step-actions .secondary-action {
+   order:2;
+   width:auto;
+   min-width:88px;
+   align-self:flex-start;
+   padding:6px 14px;
+ }
  .uniform-type-choice { margin-left:0; }
 }
 
@@ -1012,7 +1041,7 @@ tr.inseam-row .cell-inseam { display: block !important; margin: 0; padding: 0; b
         <h3>職員番号を入力してください</h3>
         <p class="step-help">職員番号が分からない場合は「000000」と入力してください。</p>
         <div class="basic-field"><label for="stepEmployeeNo">職員番号</label><input id="stepEmployeeNo" inputmode="latin" autocomplete="off" maxlength="30"></div>
-        <div class="step-actions"><button type="button" class="roster-search-button" id="stepEmployeeSearchButton">名簿を検索</button></div>
+        <div class="step-actions"><button type="button" class="roster-search-button primary-action" id="stepEmployeeSearchButton">名簿を検索</button></div>
       </section>
 
       <section id="rosterStepName" class="roster-step-panel hidden">
@@ -1024,14 +1053,14 @@ tr.inseam-row .cell-inseam { display: block !important; margin: 0; padding: 0; b
           <div class="name-field"><label for="stepSeiKana">セイ</label><input id="stepSeiKana" inputmode="katakana" autocomplete="off"></div>
           <div class="name-field"><label for="stepMeiKana">メイ</label><input id="stepMeiKana" inputmode="katakana" autocomplete="off"></div>
         </div>
-        <div class="step-actions"><button type="button" id="stepNameBackButton">戻る</button><button type="button" class="roster-search-button" id="stepNameSearchButton">名簿を検索</button></div>
+        <div class="step-actions"><button type="button" class="roster-search-button primary-action" id="stepNameSearchButton">名簿を検索</button><button type="button" class="secondary-action" id="stepNameBackButton">戻る</button></div>
       </section>
 
       <section id="rosterStepCandidates" class="roster-step-panel hidden">
         <h3>該当する名簿を選択してください</h3>
         <p class="step-help">同じ姓名・セイメイの登録が複数あります。該当する情報を選択してください。</p>
         <div id="rosterCandidateOptions"></div>
-        <div class="step-actions"><button type="button" id="stepCandidateBackButton">戻る</button><button type="button" class="roster-search-button" id="stepCandidateNextButton">選択した内容で進む</button></div>
+        <div class="step-actions"><button type="button" class="roster-search-button primary-action" id="stepCandidateNextButton">選択した内容で進む</button><button type="button" class="secondary-action" id="stepCandidateBackButton">戻る</button></div>
       </section>
 
       <section id="rosterStepDetails" class="roster-step-panel hidden">
@@ -1043,7 +1072,7 @@ tr.inseam-row .cell-inseam { display: block !important; margin: 0; padding: 0; b
         <div class="basic-select-field"><label for="stepJob">職種</label><select id="stepJob"><option value="">選択</option></select></div>
         <div id="stepDepartmentArea" class="basic-select-field hidden"><label for="stepDepartment">部署</label><select id="stepDepartment"><option value="">選択</option></select></div>
         <p id="stepDepartmentHelp" class="step-help hidden">部署が分からない場合は「不明」を選択してください。</p>
-        <div class="step-actions"><button type="button" id="stepDetailsBackButton">戻る</button><button type="button" class="roster-search-button" id="stepDetailsCompleteButton">この内容で進む</button></div>
+        <div class="step-actions"><button type="button" class="roster-search-button primary-action" id="stepDetailsCompleteButton">この内容で進む</button><button type="button" class="secondary-action" id="stepDetailsBackButton">戻る</button></div>
       </section>
       <div id="stepRosterSearchResult" class="roster-search-result" role="status" aria-live="polite"></div>
     </div>
@@ -1074,8 +1103,8 @@ tr.inseam-row .cell-inseam { display: block !important; margin: 0; padding: 0; b
 <div id="categoryStatus"></div>
 
 <div class="step-actions product-action-buttons">
-  <button type="button" id="backToBasicInfoButton" class="hidden" onclick="backToBasicInfoFromProducts()">基本情報に戻る</button>
-  <button type="button" id="submitButton" onclick="submitData(event)">確認</button>
+  <button type="button" id="submitButton" class="primary-action" onclick="submitData(event)">確認</button>
+  <button type="button" id="backToBasicInfoButton" class="secondary-action hidden" onclick="backToBasicInfoFromProducts()">戻る</button>
 </div>
 
 </div>
