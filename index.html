@@ -1584,14 +1584,31 @@ function populateStepDepartments(selected=""){
  const un=document.createElement('option');un.value='不明';un.textContent='不明';sel.appendChild(un);addMissingOption(sel,selected);sel.value=selected;
 }
 function getRosterCandidateValue(candidate, keys) {
-  const sources = [candidate, candidate?.raw, candidate?.item, candidate?.fields];
-  for (const source of sources) {
-    for (const key of keys) {
-      const value = source?.[key];
-      if (value !== undefined && value !== null && String(value).trim() !== "") return String(value).trim();
+  const wanted = new Set(keys.map(key => String(key).toLowerCase()));
+  const visited = new Set();
+  function findDeep(value, depth = 0) {
+    if (value === null || value === undefined || depth > 8) return "";
+    if (typeof value === "string") {
+      const text = value.trim();
+      if ((text.startsWith("{") || text.startsWith("[")) && text.length < 200000) {
+        try { return findDeep(JSON.parse(text), depth + 1); } catch (_) {}
+      }
+      return "";
     }
+    if (typeof value !== "object" || visited.has(value)) return "";
+    visited.add(value);
+    for (const [key, item] of Object.entries(value)) {
+      if (wanted.has(String(key).toLowerCase()) && item !== null && item !== undefined && String(item).trim() !== "") {
+        return String(item).trim();
+      }
+    }
+    for (const item of Object.values(value)) {
+      const found = findDeep(item, depth + 1);
+      if (found) return found;
+    }
+    return "";
   }
-  return "";
+  return findDeep(candidate);
 }
 function buildRosterBasicInfoState(candidate, source = "roster") {
   const state = {
@@ -1662,10 +1679,14 @@ function fillStepDetails(candidate = null, source = "roster") {
   rosterStepLastCandidate = candidate;
   const state = candidate ? setRosterBasicInfoState(candidate, source) : setRosterBasicInfoState(null, "manual");
   if (candidate && !state.identityComplete) {
-    rosterBasicInfoState = null;
-    rosterStepLastCandidate = null;
-    setStepResult("名簿検索結果に姓・名・セイ・メイの個別項目がありません。Power Automateの応答項目を確認してください。", "error");
-    return false;
+    rosterBasicInfoState = state;
+    rosterStepLastCandidate = candidate;
+    writeBasicInfoStateToInputs(state);
+    rosterStepSource = "employee-name-confirm";
+    document.getElementById("stepNameSearchButton").textContent = "次へ";
+    setRosterStep("name");
+    setStepResult("職員番号で名簿を特定しました。姓名・セイメイを入力して「次へ」を押してください。", "info");
+    return true;
   }
   applyStateDetailsToStep(state);
   const summary = document.getElementById("rosterStepSummary");
@@ -1775,16 +1796,51 @@ function backToBasicInfoFromProducts() {
 }
 async function searchRosterFromStep(mode){
  const empMode=mode==='employee';const emp=empMode?document.getElementById('stepEmployeeNo').value.trim():'';
- if(empMode){if(!emp){setStepResult('職員番号を入力してください。','error');return;}if(!validateEmployeeNoValue(emp)){setStepResult('職員番号は半角英数字で入力してください。','error');return;}document.getElementById('employeeNo').value=emp;if(emp==='000000'){rosterStepSource='name';setRosterStep('name');return;}}
- else{const vals=['stepSei','stepMei','stepSeiKana','stepMeiKana'].map(id=>document.getElementById(id).value.trim());if(vals.some(v=>!v)){setStepResult('姓・名・セイ・メイをすべて入力してください。','error');return;}if(!isFullWidthText(vals[0])||!isFullWidthText(vals[1])){setStepResult('姓・名は全角で入力してください。','error');return;}if(!isFullWidthKatakana(vals[2])||!isFullWidthKatakana(vals[3])){setStepResult('セイ・メイは全角カタカナで入力してください。','error');return;}copyStepNamesToMain();}
+ if(empMode){if(!emp){setStepResult('職員番号を入力してください。','error');return;}if(!validateEmployeeNoValue(emp)){setStepResult('職員番号は半角英数字で入力してください。','error');return;}document.getElementById('employeeNo').value=emp;if(emp==='000000'){rosterStepSource='name';document.getElementById('stepNameSearchButton').textContent='名簿を検索';setRosterStep('name');return;}}
+ else{
+   const vals=['stepSei','stepMei','stepSeiKana','stepMeiKana'].map(id=>document.getElementById(id).value.trim());
+   if(vals.some(v=>!v)){setStepResult('姓・名・セイ・メイをすべて入力してください。','error');return;}
+   if(!isFullWidthText(vals[0])||!isFullWidthText(vals[1])){setStepResult('姓・名は全角で入力してください。','error');return;}
+   if(!isFullWidthKatakana(vals[2])||!isFullWidthKatakana(vals[3])){setStepResult('セイ・メイは全角カタカナで入力してください。','error');return;}
+   copyStepNamesToMain();
+   if (rosterStepSource === 'employee-name-confirm' && rosterBasicInfoState?.employeeNo) {
+     rosterBasicInfoState.sei = vals[0];
+     rosterBasicInfoState.mei = vals[1];
+     rosterBasicInfoState.seiKana = vals[2];
+     rosterBasicInfoState.meiKana = vals[3];
+     rosterBasicInfoState.fullName = vals[0] + vals[1];
+     rosterBasicInfoState.fullNameKana = vals[2] + vals[3];
+     rosterBasicInfoState.identityComplete = true;
+     writeBasicInfoStateToInputs(rosterBasicInfoState);
+     const identifiedCandidate = {
+       employeeNo: rosterBasicInfoState.employeeNo,
+       sei: rosterBasicInfoState.sei,
+       mei: rosterBasicInfoState.mei,
+       seiKana: rosterBasicInfoState.seiKana,
+       meiKana: rosterBasicInfoState.meiKana,
+       fullName: rosterBasicInfoState.fullName,
+       fullNameKana: rosterBasicInfoState.fullNameKana,
+       gender: rosterBasicInfoState.gender,
+       job: rosterBasicInfoState.job,
+       department: rosterBasicInfoState.department,
+       lendingGroup: rosterBasicInfoState.lendingGroup,
+       lendingPatternCode: rosterBasicInfoState.lendingPatternCode
+     };
+     document.getElementById('stepNameSearchButton').textContent = '名簿を検索';
+     rosterStepSource = 'employee';
+     fillStepDetails(identifiedCandidate, 'employee');
+     setStepResult('職員番号の名簿情報を反映しました。内容を確認してください。','success');
+     return;
+   }
+ }
  const btn=document.getElementById(empMode?'stepEmployeeSearchButton':'stepNameSearchButton');btn.disabled=true;btn.textContent='検索中...';setStepResult('名簿を検索しています。','info');
  try{const body={publicKey:getCustomer(),customerCode:currentData.customerCode||'',employeeNo:emp,sei:document.getElementById('stepSei').value.trim(),mei:document.getElementById('stepMei').value.trim(),seiKana:document.getElementById('stepSeiKana').value.trim(),meiKana:document.getElementById('stepMeiKana').value.trim(),gender:'',job:''};const res=await fetch(LENDING_SEARCH_FLOW_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const text=await res.text();const json=text?JSON.parse(text):null;if(!res.ok||!json||json.result!=='ok')throw new Error(json?.message||text||'名簿検索に失敗しました。');const c=Array.isArray(json.candidates)?json.candidates:[];rosterStepSource=mode;
  if(c.length===1){
    const moved = fillStepDetails(c[0], empMode ? 'employee' : 'name');
    if(moved) setStepResult('名簿の情報を反映しました。内容を確認してください。','success');
  }
- else if(c.length===0){if(empMode){setStepResult('名簿に一致する職員番号がありません。姓名・セイメイを入力してください。','warning');setRosterStep('name');}else{rosterBasicInfoState=null;fillStepDetails(null,'manual');setStepResult('名簿に一致する登録がありません。基本情報を選択してください。','warning');}}
- else{if(empMode){setStepResult('同じ職員番号の登録が複数あります。姓名・セイメイを入力してください。','warning');setRosterStep('name');}else renderCandidateSelection(c);}
+ else if(c.length===0){if(empMode){rosterStepSource='name';document.getElementById('stepNameSearchButton').textContent='名簿を検索';setStepResult('名簿に一致する職員番号がありません。姓名・セイメイを入力してください。','warning');setRosterStep('name');}else{rosterBasicInfoState=null;fillStepDetails(null,'manual');setStepResult('名簿に一致する登録がありません。基本情報を選択してください。','warning');}}
+ else{if(empMode){rosterStepSource='name';document.getElementById('stepNameSearchButton').textContent='名簿を検索';setStepResult('同じ職員番号の登録が複数あります。姓名・セイメイを入力してください。','warning');setRosterStep('name');}else renderCandidateSelection(c);}
  }catch(e){setStepResult('名簿検索中にエラーが発生しました。\n'+e.message,'error');}finally{btn.disabled=false;btn.textContent='名簿を検索';}
 }
 function setRosterSearchResult(message, type = "info") {
