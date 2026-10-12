@@ -2398,26 +2398,18 @@ function applyConfirmReturnData() {
 }
 
 function applyEditModeData() {
-
   editData = JSON.parse(sessionStorage.getItem("uniformEditData") || "null");
 
-  if (!editData || !editData.found || !editData.orders || editData.orders.length === 0) {
+  if (!editData || !editData.found || !Array.isArray(editData.orders) || editData.orders.length === 0) {
     alert("修正対象データが見つかりません。もう一度検索してください。");
     location.href = "revise.html?customer=" + encodeURIComponent(getCustomer());
     return;
   }
 
   const base = editData.orders[0];
+  editMeasureNo = editData.measureNo || base["採寸番号"] || base.measureNo || "";
+  originalRegistrationNo = getFirstStoredValue(base, ["登録番号", "registrationNo"]);
 
-  editMeasureNo =
-    editData.measureNo ||
-    base["採寸番号"] ||
-    "";
-
-  originalRegistrationNo = getFirstStoredValue(
-    base,
-    ["登録番号", "registrationNo"]
-  );
   if (!editMeasureNo) {
     alert("採寸番号が取得できませんでした。もう一度検索してください。");
     location.href = "revise.html?customer=" + encodeURIComponent(getCustomer());
@@ -2425,9 +2417,7 @@ function applyEditModeData() {
   }
 
   const title = document.getElementById("pageTitle");
-  if (title) {
-    title.innerText = "ユニフォーム申請受付（修正）";
-  }
+  if (title) title.innerText = "ユニフォーム申請受付（修正）";
 
   const reviseLink = document.getElementById("reviseLink");
   if (reviseLink) {
@@ -2440,49 +2430,73 @@ function applyEditModeData() {
     reviseLink.href = "revise.html?customer=" + encodeURIComponent(getCustomer());
   }
 
-  const employeeNoInput = document.getElementById("employeeNo");
-  if (employeeNoInput) {
-    employeeNoInput.value = base["職員番号"] || base.employeeNo || base.staffNo || "";
-  }
-
-  document.getElementById("sei").value = getFirstStoredValue(base, ["姓", "氏", "sei"]);
-  document.getElementById("mei").value = getFirstStoredValue(base, ["名", "mei"]);
-
-document.getElementById("seiKana").value = getFirstStoredValue(base, ["セイ", "シ", "seiKana"]);
-document.getElementById("meiKana").value = getFirstStoredValue(base, ["メイ", "meiKana"]);
-
-  const lendingGroupValue = getFirstStoredValue(base, ["登録貸与グループ", "貸与グループ", "lendingGroup"]);
+  const employeeNo = getFirstStoredValue(base, ["職員番号", "employeeNo", "staffNo"]);
+  const sei = getFirstStoredValue(base, ["姓", "氏", "sei"]);
+  const mei = getFirstStoredValue(base, ["名", "mei"]);
+  const seiKana = getFirstStoredValue(base, ["セイ", "シ", "seiKana"]);
+  const meiKana = getFirstStoredValue(base, ["メイ", "meiKana"]);
+  const gender = getFirstStoredValue(base, ["性別", "gender"]);
+  const job = getFirstStoredValue(base, ["職種", "job"]);
+  const department = getFirstStoredValue(base, ["部署", "department"]);
+  const lendingGroup = getFirstStoredValue(base, ["登録貸与グループ", "貸与グループ", "lendingGroup"]);
   const lendingPatternCode = getFirstStoredValue(base, ["貸与パターンコード", "lendingPatternCode"]);
-  document.getElementById("gender").value = base["性別"] || "";
-  const storedUniformType = getFirstStoredValue(base, ["ユニフォームタイプ", "uniformType"]) || (base["性別"] || "");
-  document.getElementById("alternateUniformType").checked = !!(base["性別"] && storedUniformType && base["性別"] !== storedUniformType);
+  const storedUniformType = getFirstStoredValue(base, ["ユニフォームタイプ", "uniformType"]) || gender;
+  const alternateUniformSelected =
+    base.alternateUniformSelected === true ||
+    base.alternateUniformSelected === 1 ||
+    String(base.alternateUniformSelected || "").toLowerCase() === "true" ||
+    Number(base["異性ユニフォーム選択"] || 0) === 1 ||
+    !!(gender && storedUniformType && gender !== storedUniformType);
+
+  const employeeNoInput = document.getElementById("employeeNo");
+  if (employeeNoInput) employeeNoInput.value = employeeNo;
+  document.getElementById("sei").value = sei;
+  document.getElementById("mei").value = mei;
+  document.getElementById("seiKana").value = seiKana;
+  document.getElementById("meiKana").value = meiKana;
+
+  // 商品表を作る前に、登録性別と実際のユニフォームタイプを確定する。
+  document.getElementById("gender").value = gender;
+  document.getElementById("alternateUniformType").checked = alternateUniformSelected;
   updateUniformTypeStatus();
+
+  // 確定したユニフォームタイプに対応する職種・部署・貸与パターンを順に復元する。
   updateJobOptions();
-
-  addMissingOption(document.getElementById("job"), base["職種"]);
-  document.getElementById("job").value = base["職種"] || "";
-
-  changeJob();
-  currentLendingGroup = lendingGroupValue;
-  rosterSearchCompleted = true;
-  updateLendingPatternOptions(lendingPatternCode);
-  lastAcceptedLendingPatternCode = lendingPatternCode;
-  if (lendingPatternCode) changeLendingPattern();
-
+  addMissingOption(document.getElementById("job"), job);
+  document.getElementById("job").value = job;
+  updateDepartmentOptions();
   const departmentSelect = document.getElementById("department");
   if (departmentSelect) {
-    addMissingOption(departmentSelect, base["部署"]);
-    departmentSelect.value = base["部署"] || "";
+    addMissingOption(departmentSelect, department);
+    departmentSelect.value = department;
   }
 
+  currentLendingGroup = lendingGroup;
+  rosterSearchCompleted = true;
+  const hasPatterns = updateLendingPatternOptions(lendingPatternCode);
+  lastAcceptedLendingPatternCode = lendingPatternCode;
+
+  if (lendingPatternCode) {
+    document.querySelectorAll('input[name="lendingPattern"]').forEach(input => {
+      input.checked = input.value === lendingPatternCode;
+      input.disabled = input.value !== lendingPatternCode;
+    });
+    changeLendingPattern();
+  } else if (!hasPatterns) {
+    createTable(currentData, job, getUniformTypeGender());
+  }
+
+  // 商品表の作成後に、登録済みの商品・サイズ・数量・股下加工を戻す。
   restoreMeasurementFromEditData(editData.measurement);
   restoreOrdersFromEditData(editData.orders);
 
   setBasicInfoReadOnly();
+  document.getElementById("alternateUniformType").disabled = false;
+  document.getElementById("alternateUniformType").style.backgroundColor = "";
 
   updateCategorySummary();
   updateAllMeasurementButtons();
-  
+  updateAllInseamAreas();
 }
 
 function addMissingOption(select, value) {
