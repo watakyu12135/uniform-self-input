@@ -2455,15 +2455,14 @@ function applyEditModeData() {
   document.getElementById("seiKana").value = seiKana;
   document.getElementById("meiKana").value = meiKana;
 
-  // 商品表を作る前に、登録性別と実際のユニフォームタイプを確定する。
   document.getElementById("gender").value = gender;
   document.getElementById("alternateUniformType").checked = alternateUniformSelected;
   updateUniformTypeStatus();
 
-  // 確定したユニフォームタイプに対応する職種・部署・貸与パターンを順に復元する。
   updateJobOptions();
   addMissingOption(document.getElementById("job"), job);
   document.getElementById("job").value = job;
+
   updateDepartmentOptions();
   const departmentSelect = document.getElementById("department");
   if (departmentSelect) {
@@ -2486,7 +2485,6 @@ function applyEditModeData() {
     createTable(currentData, job, getUniformTypeGender());
   }
 
-  // 商品表の作成後に、登録済みの商品・サイズ・数量・股下加工を戻す。
   restoreMeasurementFromEditData(editData.measurement);
   restoreOrdersFromEditData(editData.orders);
 
