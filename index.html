@@ -1068,7 +1068,7 @@ tr.inseam-row .cell-inseam { display: block !important; margin: 0; padding: 0; b
         <p class="step-help">名簿に登録がない項目、または現在の内容と異なる項目は選択し直してください。</p>
         <div id="rosterStepSummary" class="roster-confirm-list hidden"></div>
         <div class="basic-select-field"><label for="stepGender">性別</label><select id="stepGender"><option value="">選択</option><option value="男性">男性</option><option value="女性">女性</option></select></div>
-        <div class="uniform-type-choice"><label><input type="checkbox" id="stepAlternateUniform">登録された性別と異なるユニフォームを選ぶ</label><div id="stepUniformTypeStatus" class="uniform-type-status"></div></div>
+        <div class="uniform-type-choice hidden" aria-hidden="true"><label><input type="checkbox" id="stepAlternateUniform" tabindex="-1">登録された性別と異なるユニフォームを選ぶ</label><div id="stepUniformTypeStatus" class="uniform-type-status"></div></div>
         <div class="basic-select-field"><label for="stepJob">職種</label><select id="stepJob"><option value="">選択</option></select></div>
         <div id="stepDepartmentArea" class="basic-select-field hidden"><label for="stepDepartment">部署</label><select id="stepDepartment"><option value="">選択</option></select></div>
         <p id="stepDepartmentHelp" class="step-help hidden">部署が分からない場合は「不明」を選択してください。</p>
@@ -1603,13 +1603,13 @@ function initializeRosterSteps(){
 function setStepResult(msg,type="info"){const a=document.getElementById("stepRosterSearchResult");a.className="roster-search-result "+type;a.textContent=msg;}
 function copyStepNamesToMain(){['Sei','Mei','SeiKana','MeiKana'].forEach(x=>document.getElementById(x[0].toLowerCase()+x.slice(1)).value=document.getElementById('step'+x).value.trim());}
 function populateStepJobs(selected=""){
- const g=document.getElementById("stepGender").value;const type=document.getElementById("stepAlternateUniform").checked?getOppositeUniformType(g):g;const sel=document.getElementById("stepJob");sel.innerHTML='<option value="">選択</option>';
+ const type=document.getElementById("stepGender").value;const sel=document.getElementById("stepJob");sel.innerHTML='<option value="">選択</option>';
  if(currentData&&type)[...new Set(currentData.jobs.filter(j=>j.gender===type).map(j=>j.job))].forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);});addMissingOption(sel,selected);sel.value=selected;
 }
 function populateStepDepartments(selected=""){
  const area=document.getElementById("stepDepartmentArea"),help=document.getElementById("stepDepartmentHelp"),sel=document.getElementById("stepDepartment");
  if(!isDepartmentActive()){area.classList.add('hidden');help.classList.add('hidden');return;}area.classList.remove('hidden');help.classList.remove('hidden');sel.innerHTML='<option value="">選択</option>';
- const g=document.getElementById("stepGender").value;const type=document.getElementById("stepAlternateUniform").checked?getOppositeUniformType(g):g;const job=document.getElementById("stepJob").value;
+ const type=document.getElementById("stepGender").value;const job=document.getElementById("stepJob").value;
  (currentData.departments||[]).filter(d=>d.active!==false&&d.job===job&&(!d.gender||d.gender===type||d.gender==='兼用')).filter((d,i,a)=>a.findIndex(x=>x.department===d.department)===i).forEach(d=>{if(!d.department||d.department==='不明')return;const o=document.createElement('option');o.value=d.department;o.textContent=d.department;sel.appendChild(o);});
  const un=document.createElement('option');un.value='不明';un.textContent='不明';sel.appendChild(un);addMissingOption(sel,selected);sel.value=selected;
 }
@@ -1777,10 +1777,10 @@ function applySelectedRosterCandidate(){
   fillStepDetails(candidate, rosterStepSource === "employee" ? "employee" : "name");
 }
 
-function syncStepDetails(){
+function syncStepDetails(event){
  const oldJob=document.getElementById("stepJob").value,oldDep=document.getElementById("stepDepartment").value;
- if(event?.target?.id==='stepGender'||event?.target?.id==='stepAlternateUniform'){populateStepJobs(oldJob);if(!document.getElementById("stepJob").value&&oldJob)alert('選択したユニフォームには現在の職種が設定されていません。職種を選択し直してください。');}
- populateStepDepartments(oldDep);document.getElementById("gender").value=document.getElementById("stepGender").value;document.getElementById("alternateUniformType").checked=document.getElementById("stepAlternateUniform").checked;updateUniformTypeStatus();
+ if(event?.target?.id==='stepGender'){populateStepJobs(oldJob);if(!document.getElementById("stepJob").value&&oldJob)alert('選択した性別には現在の職種が設定されていません。職種を選択し直してください。');}
+ populateStepDepartments(oldDep);document.getElementById("gender").value=document.getElementById("stepGender").value;updateUniformTypeStatus();
 }
 function completeRosterStepDetails() {
   if (rosterStepLastCandidate && rosterBasicInfoState?.source === "employee") {
@@ -1806,7 +1806,6 @@ function completeRosterStepDetails() {
   if (isDepartmentActive() && !department) { alert("部署を選択してください"); return; }
   writeBasicInfoStateToInputs(rosterBasicInfoState);
   document.getElementById("gender").value = gender;
-  document.getElementById("alternateUniformType").checked = document.getElementById("stepAlternateUniform").checked;
   updateUniformTypeStatus();
   updateJobOptions();
   addMissingOption(document.getElementById("job"), job);
