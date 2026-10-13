@@ -4354,21 +4354,21 @@
       ],
       "categoryDisplay": [
         {
-          "productCategory": "診察衣",
-          "displayOrder": 1,
-          "heading": "診察衣を選んで下さい",
-          "note": ""
-        },
-        {
           "productCategory": "調理衣",
-          "displayOrder": 2,
+          "displayOrder": 1,
           "heading": "調理衣を選んで下さい",
           "note": ""
         },
         {
           "productCategory": "パンツ",
-          "displayOrder": 4,
+          "displayOrder": 3,
           "heading": "パンツを選んで下さい",
+          "note": ""
+        },
+        {
+          "productCategory": "診察衣",
+          "displayOrder": 4,
+          "heading": "診察衣を選んで下さい",
           "note": ""
         }
       ]
@@ -4455,27 +4455,27 @@
       ],
       "categoryDisplay": [
         {
-          "productCategory": "診察衣",
-          "displayOrder": 1,
-          "heading": "診察衣を選んで下さい",
-          "note": ""
-        },
-        {
           "productCategory": "調理衣",
-          "displayOrder": 2,
+          "displayOrder": 1,
           "heading": "調理衣を選んで下さい",
           "note": ""
         },
         {
           "productCategory": "スクラブ",
-          "displayOrder": 3,
+          "displayOrder": 2,
           "heading": "スクラブを選んで下さい",
           "note": ""
         },
         {
           "productCategory": "パンツ",
-          "displayOrder": 4,
+          "displayOrder": 3,
           "heading": "パンツを選んで下さい",
+          "note": ""
+        },
+        {
+          "productCategory": "診察衣",
+          "displayOrder": 4,
+          "heading": "診察衣を選んで下さい",
           "note": ""
         }
       ]
