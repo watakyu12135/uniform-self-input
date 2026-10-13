@@ -126,6 +126,10 @@ button {
 .uniform-type-choice { margin:-8px 0 18px 90px; max-width:520px; }
 .uniform-type-choice label { display:flex; align-items:flex-start; gap:8px; font-weight:700; line-height:1.45; }
 .uniform-type-choice input { width:auto; margin-top:3px; }
+.employee-unknown-choice { margin:-8px 0 18px 90px; max-width:520px; }
+.employee-unknown-choice label { display:flex; align-items:flex-start; gap:8px; font-weight:700; line-height:1.45; }
+.employee-unknown-choice input { width:auto; margin-top:3px; }
+.employee-unknown-choice.disabled { color:#888; }
 .uniform-type-status { margin:6px 0 0 26px; color:#4c5b68; font-size:13px; }
 .field-help { color:#4c5b68; font-size:13px; margin-top:5px; }
 .roster-candidate-select { display:block; margin-top:10px; padding:12px; border:1px solid #b8c8d8; border-radius:8px; background:#fff; cursor:pointer; line-height:1.6; }
@@ -145,6 +149,7 @@ button {
    padding:6px 14px;
  }
  .uniform-type-choice { margin-left:0; }
+ .employee-unknown-choice { margin-left:0; }
 }
 
 /* 貸与枚数 */
@@ -1041,6 +1046,7 @@ tr.inseam-row .cell-inseam { display: block !important; margin: 0; padding: 0; b
         <h3>職員番号を入力してください</h3>
         <p class="step-help">職員番号が分からない場合は「000000」と入力してください。</p>
         <div class="basic-field"><label for="stepEmployeeNo">職員番号</label><input id="stepEmployeeNo" inputmode="latin" autocomplete="off" maxlength="30"></div>
+        <div class="employee-unknown-choice"><label><input type="checkbox" id="stepEmployeeNoUnknown">職員番号が分からない場合</label></div>
         <div class="step-actions"><button type="button" class="roster-search-button primary-action" id="stepEmployeeSearchButton">名簿を検索</button></div>
       </section>
 
@@ -1585,8 +1591,43 @@ function setRosterStep(step){
  document.getElementById("rosterStepDetails").classList.toggle("hidden",step!=="details");
  document.getElementById("stepRosterSearchResult").textContent="";
 }
+function syncEmployeeNoUnknownState(source) {
+  const input = document.getElementById("stepEmployeeNo");
+  const checkbox = document.getElementById("stepEmployeeNoUnknown");
+  const wrapper = checkbox?.closest(".employee-unknown-choice");
+  if (!input || !checkbox) return;
+
+  if (source === "input") {
+    const hasValue = input.value.trim() !== "";
+    checkbox.disabled = hasValue;
+    if (hasValue) checkbox.checked = false;
+    wrapper?.classList.toggle("disabled", hasValue);
+    input.disabled = false;
+    return;
+  }
+
+  if (source === "checkbox") {
+    if (checkbox.checked) {
+      input.value = "";
+      input.disabled = true;
+      wrapper?.classList.remove("disabled");
+    } else {
+      input.disabled = false;
+      input.focus();
+    }
+  }
+}
+function initializeEmployeeNoUnknownChoice() {
+  const input = document.getElementById("stepEmployeeNo");
+  const checkbox = document.getElementById("stepEmployeeNoUnknown");
+  if (!input || !checkbox) return;
+  input.addEventListener("input", () => syncEmployeeNoUnknownState("input"));
+  checkbox.addEventListener("change", () => syncEmployeeNoUnknownState("checkbox"));
+  syncEmployeeNoUnknownState("input");
+}
 function initializeRosterSteps(){
  setRosterStep(isEmployeeNoActive()?"employee":"name");
+ initializeEmployeeNoUnknownChoice();
  document.getElementById("stepEmployeeSearchButton").onclick=()=>searchRosterFromStep("employee");
  document.getElementById("stepNameSearchButton").onclick=()=>searchRosterFromStep("name");
  document.getElementById("stepNameBackButton").onclick=()=>setRosterStep("employee");
@@ -1765,6 +1806,9 @@ function applySelectedRosterCandidate(){
     if (rosterStepSource === "employee") {
       document.getElementById("stepEmployeeNo").value = "";
       document.getElementById("employeeNo").value = "";
+      document.getElementById("stepEmployeeNoUnknown").checked = false;
+      document.getElementById("stepEmployeeNoUnknown").disabled = false;
+      document.getElementById("stepEmployeeNo").disabled = false;
       setRosterStep("employee");
       setStepResult("職員番号を再入力してください。不明の場合は000000を入力してください。", "warning");
       document.getElementById("stepEmployeeNo").focus();
@@ -1857,19 +1901,26 @@ function backToBasicInfoFromProducts() {
 }
 async function searchRosterFromStep(mode){
   const empMode = mode === "employee";
-  const emp = empMode ? document.getElementById("stepEmployeeNo").value.trim() : "";
+  const employeeInput = document.getElementById("stepEmployeeNo");
+  const employeeUnknown = document.getElementById("stepEmployeeNoUnknown")?.checked === true;
+  const enteredEmployeeNo = empMode ? employeeInput.value.trim() : "";
+  const emp = empMode && employeeUnknown ? "000000" : enteredEmployeeNo;
 
   if (empMode) {
-    if (!emp) {
-      setStepResult("職員番号を入力してください。", "error");
+    if (enteredEmployeeNo && employeeUnknown) {
+      setStepResult("職員番号が入力されています。職員番号で検索する場合は、「職員番号が分からない場合」のチェックを外してください。", "error");
       return;
     }
-    if (!validateEmployeeNoValue(emp)) {
+    if (!enteredEmployeeNo && !employeeUnknown) {
+      setStepResult("職員番号を入力するか、「職員番号が分からない場合」にチェックしてください。", "error");
+      return;
+    }
+    if (!employeeUnknown && !validateEmployeeNoValue(enteredEmployeeNo)) {
       setStepResult("職員番号は半角英数字で入力してください。", "error");
       return;
     }
     document.getElementById("employeeNo").value = emp;
-    if (emp === "000000") {
+    if (employeeUnknown) {
       rosterStepSource = "name";
       setRosterStep("name");
       return;
