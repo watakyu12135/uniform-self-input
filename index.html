@@ -1058,7 +1058,7 @@ tr.inseam-row .cell-inseam { display: block !important; margin: 0; padding: 0; b
 
       <section id="rosterStepCandidates" class="roster-step-panel hidden">
         <h3>該当する名簿を選択してください</h3>
-        <p class="step-help">同じ姓名・セイメイの登録が複数あります。該当する情報を選択してください。</p>
+        <p class="step-help">入力内容に一致する名簿が見つかりました。該当する情報を選択してください。</p>
         <div id="rosterCandidateOptions"></div>
         <div class="step-actions"><button type="button" class="roster-search-button primary-action" id="stepCandidateNextButton">選択した内容で進む</button><button type="button" class="secondary-action" id="stepCandidateBackButton">戻る</button></div>
       </section>
@@ -1746,7 +1746,10 @@ function renderCandidateSelection(cands){
   });
   const none = document.createElement("label");
   none.className = "roster-candidate-select";
-  none.innerHTML = '<input type="radio" name="stepRosterCandidate" value="none">該当する登録がない';
+  const noneText = rosterStepSource === "employee"
+    ? "再度職員番号で検索する"
+    : "該当する登録がない";
+  none.innerHTML = `<input type="radio" name="stepRosterCandidate" value="none">${noneText}`;
   box.appendChild(none);
   setRosterStep("candidates");
 }
@@ -1760,8 +1763,11 @@ function applySelectedRosterCandidate(){
     rosterStepLastCandidate = null;
     rosterBasicInfoState = null;
     if (rosterStepSource === "employee") {
+      document.getElementById("stepEmployeeNo").value = "";
+      document.getElementById("employeeNo").value = "";
       setRosterStep("employee");
-      setStepResult("入力した職員番号と一致する名簿があります。職員番号を確認してください。不明の場合は000000を入力してください。", "warning");
+      setStepResult("職員番号を再入力してください。不明の場合は000000を入力してください。", "warning");
+      document.getElementById("stepEmployeeNo").focus();
       return;
     }
     fillStepDetails(null, "manual");
