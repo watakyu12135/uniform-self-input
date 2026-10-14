@@ -287,12 +287,34 @@ function escapeHtml(value) {
 
 function getCustomerKey() {
   const url = new URL(window.location.href);
+  let storedDraft = null;
+  const rawDraft = sessionStorage.getItem("uniformDraft");
+
+  if (rawDraft) {
+    try {
+      storedDraft = JSON.parse(rawDraft);
+    } catch (error) {
+      console.error("uniformDraftの読み込みに失敗しました。", error);
+    }
+  }
+
+  const firstOrder =
+    draft?.orders?.[0] ||
+    storedDraft?.orders?.[0] ||
+    {};
+
   const customerKey =
     url.searchParams.get("customer") ||
     sessionStorage.getItem("uniformCustomer") ||
     draft?.publicKey ||
     draft?.customerKey ||
     draft?.customer ||
+    storedDraft?.publicKey ||
+    storedDraft?.customerKey ||
+    storedDraft?.customer ||
+    firstOrder.publicKey ||
+    firstOrder.customerKey ||
+    firstOrder.customer ||
     "";
 
   if (customerKey) {
@@ -304,6 +326,9 @@ function getCustomerKey() {
 
 async function checkPageDeadline() {
   const publicKey = getCustomerKey();
+  if (!publicKey) {
+    throw new Error("公開キーを取得できませんでした。入力画面からやり直してください。");
+  }
   if (!HP_DEADLINE_FLOW_URL || HP_DEADLINE_FLOW_URL.includes("HTTP POST URLをここに貼る")) {
     throw new Error("PA_HP有効期限チェックのHTTP POST URLが未設定です。");
   }
@@ -1183,12 +1208,17 @@ normalizePayloadForPowerAutomate(payload);
 
 async function initializeConfirmPage() {
   try {
+    loadDraft();
+
     const available = await checkPageDeadline();
     if (!available) return;
-    loadDraft();
   } catch (err) {
     console.error("HP公開期限チェックに失敗しました。", err);
-    location.replace("expired.html");
+    const message = document.getElementById("message");
+    if (message) {
+      message.innerText =
+        "HP公開期限チェックに失敗しました。通信環境を確認して、もう一度お試しください。";
+    }
   }
 }
 
