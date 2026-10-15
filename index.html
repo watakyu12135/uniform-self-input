@@ -1229,7 +1229,7 @@ tr.inseam-row .cell-inseam { display: block !important; margin: 0; padding: 0; b
  }
  function selector(data){
    const wrap=document.createElement("div");wrap.id="uniformLanguageSelector";wrap.className="uniform-language-selector";wrap.dataset.i18nIgnore="true";
-   const label=document.createElement("label");label.htmlFor="uniformLanguageSelect";label.textContent="Language / Ngôn ngữ";
+   const label=document.createElement("label");label.htmlFor="uniformLanguageSelect";label.textContent="言語 / Language";
    const sel=document.createElement("select");sel.id="uniformLanguageSelect";
    [...(data.languages||[])].sort((a,b)=>a.order-b.order).forEach(x=>{const o=document.createElement("option");o.value=x.code;o.textContent=x.displayName;o.selected=x.code===lang;sel.appendChild(o);});
    sel.addEventListener("change",()=>{localStorage.setItem(KEY,sel.value);location.reload();});wrap.append(label,sel);document.body.prepend(wrap);
