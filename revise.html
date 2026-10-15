@@ -455,7 +455,7 @@ body {
     wrap.setAttribute("data-i18n-ignore", "true");
     const label = document.createElement("label");
     label.htmlFor = "uniformLanguageSelect";
-    label.textContent = "Language / Ngôn ngữ";
+    label.textContent = "言語 / Language";
     const select = document.createElement("select");
     select.id = "uniformLanguageSelect";
     (languageData.languages || []).sort((a,b) => a.order - b.order).forEach(item => {
