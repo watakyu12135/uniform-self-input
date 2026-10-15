@@ -1,0 +1,24 @@
+{
+  "version": "20261015-112345",
+  "defaultLanguage": "ja",
+  "languages": [
+    {
+      "code": "ja",
+      "name": "日本語",
+      "displayName": "日本語",
+      "order": 1
+    },
+    {
+      "code": "en",
+      "name": "英語",
+      "displayName": "English",
+      "order": 2
+    },
+    {
+      "code": "vi",
+      "name": "ベトナム語",
+      "displayName": "Tiếng Việt",
+      "order": 3
+    }
+  ]
+}
