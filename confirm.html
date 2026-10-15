@@ -134,6 +134,15 @@ body.sending-locked { overflow: hidden; }
   display: none;
 }
 
+
+/* ===== Multilingual flexible layout ===== */
+:where(h1,h2,h3,h4,p,li,label,button,a,.notice,.error,.success,.info-row,.item,.small){overflow-wrap:anywhere;word-break:normal;white-space:normal;}
+button{height:auto;min-height:44px;line-height:1.45;}
+.uniform-language-selector{width:auto!important;max-width:100%!important;box-sizing:border-box!important;flex-wrap:wrap!important;}
+.uniform-language-selector label{display:inline-block!important;width:auto!important;max-width:none!important;margin:0!important;white-space:nowrap!important;flex:0 0 auto!important;}
+.uniform-language-selector select,#uniformLanguageSelect{display:inline-block!important;width:auto!important;min-width:130px!important;max-width:220px!important;margin:0!important;flex:0 0 auto!important;}
+
+.check-area label{align-items:flex-start!important}.check-area input[type="checkbox"]{flex:0 0 auto;margin-top:.25em!important}.check-area label>span{min-width:0;overflow-wrap:anywhere}.info-row{display:grid;grid-template-columns:minmax(150px,auto) minmax(0,1fr);gap:6px}.info-row span{min-width:0;overflow-wrap:anywhere}@media(max-width:600px){.info-row{grid-template-columns:1fr}}
 </style>
 <style id="uniformI18nStyle">
 .uniform-language-selector{position:sticky;top:0;z-index:9999;display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:8px 12px;background:#fff;border-bottom:1px solid #d9e2ec;font-size:13px;color:#334155}
@@ -188,9 +197,8 @@ body.sending-locked { overflow: hidden; }
 <h3>登録確認</h3>
 <div class="notice">
   入力された情報と一致した登録があります。<br/><br/>
-  修正の場合は
-  <a href="revise.html" id="duplicateReviseLink">こちら</a>
-  をご利用ください。<br/><br/>
+  修正はこちら：
+  <a href="revise.html" id="duplicateReviseLink">修正ページを開く</a><br/><br/>
   このまま登録する場合は、チェックを入れて進んでください。
 </div>
 <div class="check-area">
