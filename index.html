@@ -1001,11 +1001,7 @@ tr.inseam-row .cell-inseam { display: block !important; margin: 0; padding: 0; b
 }
 
 </style>
-<style id="uniformI18nStyle">
-.uniform-language-selector{position:sticky;top:0;z-index:9999;display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:8px 12px;background:#fff;border-bottom:1px solid #d9e2ec;font-size:13px;color:#334155}
-.uniform-language-selector select{min-width:130px;padding:7px 30px 7px 10px;border:1px solid #94a3b8;border-radius:8px;background:#fff;color:#0f172a;font-size:14px}
-@media(max-width:600px){.uniform-language-selector{position:relative;padding:7px 10px}.uniform-language-selector label{font-size:12px}.uniform-language-selector select{min-width:120px}}
-</style></head>
+<style id="uniformI18nStyle">.uniform-language-selector{position:sticky;top:0;z-index:9999;display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:8px 12px;background:#fff;border-bottom:1px solid #d9e2ec;font-size:13px;color:#334155}.uniform-language-selector select{min-width:130px;padding:7px 30px 7px 10px;border:1px solid #94a3b8;border-radius:8px;background:#fff;color:#0f172a;font-size:14px}</style></head>
 <body>
 <div class="page-shell">
 <header class="site-header">
@@ -1205,122 +1201,44 @@ tr.inseam-row .cell-inseam { display: block !important; margin: 0; padding: 0; b
 </div>
 <script id="uniformI18nRuntime">
 (() => {
-  "use strict";
-  const STORAGE_KEY = "uniformLanguage";
-  const DEFAULT_LANGUAGE = "ja";
-  const SUPPORTED = ["ja", "en", "vi"];
-  let currentLanguage = SUPPORTED.includes(localStorage.getItem(STORAGE_KEY)) ? localStorage.getItem(STORAGE_KEY) : DEFAULT_LANGUAGE;
-  let sourceMap = { en: {}, vi: {} };
-  let applying = false;
-
-  const normalizeBreaks = value => String(value ?? "").replace(/\\n/g, "\n");
-  const escapeRegExp = value => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-  function translateTemplate(text) {
-    if (currentLanguage === DEFAULT_LANGUAGE || !text) return text;
-    const map = sourceMap[currentLanguage] || {};
-    const raw = String(text);
-    if (Object.prototype.hasOwnProperty.call(map, raw)) return normalizeBreaks(map[raw]);
-    const trimmed = raw.trim();
-    if (Object.prototype.hasOwnProperty.call(map, trimmed)) {
-      return raw.replace(trimmed, normalizeBreaks(map[trimmed]));
-    }
-    for (const [ja, translated] of Object.entries(map)) {
-      if (!ja.includes("{") || !ja.includes("}")) continue;
-      const names = [...ja.matchAll(/\{([^{}]+)\}/g)].map(m => m[1]);
-      let pattern = escapeRegExp(ja);
-      names.forEach(name => { pattern = pattern.replace(escapeRegExp("{" + name + "}"), "(.+?)"); });
-      const match = raw.match(new RegExp("^" + pattern + "$"));
-      if (!match) continue;
-      let result = normalizeBreaks(translated);
-      names.forEach((name, index) => { result = result.replaceAll("{" + name + "}", match[index + 1]); });
-      return result;
-    }
-    return raw;
-  }
-
-  function translateNode(node) {
-    if (node.nodeType === Node.TEXT_NODE) {
-      const before = node.nodeValue;
-      const after = translateTemplate(before);
-      if (after !== before) node.nodeValue = after;
-      return;
-    }
-    if (node.nodeType !== Node.ELEMENT_NODE) return;
-    if (node.closest("script,style,[data-i18n-ignore]")) return;
-    ["placeholder", "title", "aria-label", "value"].forEach(attr => {
-      if (!node.hasAttribute(attr)) return;
-      if (attr === "value" && !["BUTTON", "INPUT", "OPTION"].includes(node.tagName)) return;
-      const before = node.getAttribute(attr);
-      const after = translateTemplate(before);
-      if (after !== before) node.setAttribute(attr, after);
-    });
-    [...node.childNodes].forEach(translateNode);
-  }
-
-  function applyLanguage(language) {
-    currentLanguage = SUPPORTED.includes(language) ? language : DEFAULT_LANGUAGE;
-    localStorage.setItem(STORAGE_KEY, currentLanguage);
-    document.documentElement.lang = currentLanguage;
-    applying = true;
-    translateNode(document.body);
-    applying = false;
-    document.dispatchEvent(new CustomEvent("uniformLanguageChanged", { detail: { language: currentLanguage } }));
-  }
-
-  function createSelector(languageData) {
-    if (document.getElementById("uniformLanguageSelector")) return;
-    const wrap = document.createElement("div");
-    wrap.id = "uniformLanguageSelector";
-    wrap.className = "uniform-language-selector";
-    wrap.setAttribute("data-i18n-ignore", "true");
-    const label = document.createElement("label");
-    label.htmlFor = "uniformLanguageSelect";
-    label.textContent = "Language / Ngôn ngữ";
-    const select = document.createElement("select");
-    select.id = "uniformLanguageSelect";
-    (languageData.languages || []).sort((a,b) => a.order - b.order).forEach(item => {
-      const option = document.createElement("option");
-      option.value = item.code;
-      option.textContent = item.displayName;
-      option.selected = item.code === currentLanguage;
-      select.appendChild(option);
-    });
-    select.addEventListener("change", () => {
-      localStorage.setItem(STORAGE_KEY, select.value);
-      location.reload();
-    });
-    wrap.append(label, select);
-    document.body.prepend(wrap);
-  }
-
-  const originalAlert = window.alert.bind(window);
-  const originalConfirm = window.confirm.bind(window);
-  window.alert = message => originalAlert(translateTemplate(message));
-  window.confirm = message => originalConfirm(translateTemplate(message));
-  window.uniformTranslate = translateTemplate;
-
-  Promise.all([
-    fetch("languages.json", { cache: "no-store" }).then(r => { if (!r.ok) throw new Error("languages.json"); return r.json(); }),
-    fetch("translations.json", { cache: "no-store" }).then(r => { if (!r.ok) throw new Error("translations.json"); return r.json(); })
-  ]).then(([languageData, translationData]) => {
-    sourceMap = translationData.sourceMap || { en: {}, vi: {} };
-    createSelector(languageData);
-    applyLanguage(currentLanguage);
-    new MutationObserver(records => {
-      if (applying || currentLanguage === DEFAULT_LANGUAGE) return;
-      applying = true;
-      records.forEach(record => record.addedNodes.forEach(translateNode));
-      applying = false;
-    }).observe(document.body, { childList: true, subtree: true });
-  }).catch(error => {
-    console.warn("Translation files could not be loaded. Japanese will be displayed.", error);
-    createSelector({ languages: [
-      { code: "ja", displayName: "日本語", order: 1 },
-      { code: "en", displayName: "English", order: 2 },
-      { code: "vi", displayName: "Tiếng Việt", order: 3 }
-    ]});
-  });
+ "use strict";
+ const KEY="uniformLanguage", DEF="ja", SUP=["ja","en","vi"];
+ let lang=SUP.includes(localStorage.getItem(KEY))?localStorage.getItem(KEY):DEF;
+ let sourceMap={en:{},vi:{}}, applying=false;
+ const nb=v=>String(v??"").replace(/\\n/g,"\n");
+ const esc=v=>v.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+ function tr(text){
+   if(lang===DEF||!text)return text;
+   const map=sourceMap[lang]||{}, raw=String(text), trimmed=raw.trim();
+   if(Object.prototype.hasOwnProperty.call(map,raw))return nb(map[raw]);
+   if(Object.prototype.hasOwnProperty.call(map,trimmed))return raw.replace(trimmed,nb(map[trimmed]));
+   for(const [ja,to] of Object.entries(map)){
+     if(!ja.includes("{")||!ja.includes("}"))continue;
+     const names=[...ja.matchAll(/\{([^{}]+)\}/g)].map(m=>m[1]);let p=esc(ja);
+     names.forEach(n=>p=p.replace(esc("{"+n+"}"),"(.+?)"));const m=raw.match(new RegExp("^"+p+"$"));if(!m)continue;
+     let result=nb(to);names.forEach((n,i)=>result=result.replaceAll("{"+n+"}",m[i+1]));return result;
+   }
+   return raw;
+ }
+ function translateNode(node){
+   if(node.nodeType===Node.TEXT_NODE){const b=node.nodeValue,a=tr(b);if(a!==b)node.nodeValue=a;return;}
+   if(node.nodeType!==Node.ELEMENT_NODE||node.closest("script,style,[data-i18n-ignore]"))return;
+   /* Important: never translate value. Business logic compares Japanese internal values such as 男性 and 女性. */
+   ["placeholder","title","aria-label"].forEach(attr=>{if(node.hasAttribute(attr)){const b=node.getAttribute(attr),a=tr(b);if(a!==b)node.setAttribute(attr,a);}});
+   [...node.childNodes].forEach(translateNode);
+ }
+ function selector(data){
+   const wrap=document.createElement("div");wrap.id="uniformLanguageSelector";wrap.className="uniform-language-selector";wrap.dataset.i18nIgnore="true";
+   const label=document.createElement("label");label.htmlFor="uniformLanguageSelect";label.textContent="Language / Ngôn ngữ";
+   const sel=document.createElement("select");sel.id="uniformLanguageSelect";
+   [...(data.languages||[])].sort((a,b)=>a.order-b.order).forEach(x=>{const o=document.createElement("option");o.value=x.code;o.textContent=x.displayName;o.selected=x.code===lang;sel.appendChild(o);});
+   sel.addEventListener("change",()=>{localStorage.setItem(KEY,sel.value);location.reload();});wrap.append(label,sel);document.body.prepend(wrap);
+ }
+ const oa=window.alert.bind(window),oc=window.confirm.bind(window);window.alert=m=>oa(tr(m));window.confirm=m=>oc(tr(m));window.uniformTranslate=tr;
+ Promise.all([fetch("languages.json",{cache:"no-store"}).then(r=>r.json()),fetch("translations.json",{cache:"no-store"}).then(r=>r.json())]).then(([ld,td])=>{
+   sourceMap=td.sourceMap||sourceMap;selector(ld);document.documentElement.lang=lang;applying=true;translateNode(document.body);applying=false;
+   new MutationObserver(rs=>{if(applying||lang===DEF)return;applying=true;rs.forEach(r=>r.addedNodes.forEach(translateNode));applying=false;}).observe(document.body,{childList:true,subtree:true});
+ }).catch(e=>console.warn("Translation files could not be loaded.",e));
 })();
 </script><script>
 
