@@ -1223,16 +1223,7 @@ tr.inseam-row .cell-inseam { display: block !important; margin: 0; padding: 0; b
  function translateNode(node){
    if(node.nodeType===Node.TEXT_NODE){const b=node.nodeValue,a=tr(b);if(a!==b)node.nodeValue=a;return;}
    if(node.nodeType!==Node.ELEMENT_NODE||node.closest("script,style,[data-i18n-ignore]"))return;
-   /* Translation-key mode. Never translate value because business logic uses Japanese internal values. */
-   const key=node.getAttribute("data-i18n");
-   if(key){
-     const keyed=window.uniformTranslations?.[lang]?.[key];
-     if(keyed!==undefined){
-       const target=node.getAttribute("data-i18n-attr");
-       if(target){node.setAttribute(target,nb(keyed));}else{node.textContent=nb(keyed);}
-       return;
-     }
-   }
+   /* Important: never translate value. Business logic compares Japanese internal values such as 男性 and 女性. */
    ["placeholder","title","aria-label"].forEach(attr=>{if(node.hasAttribute(attr)){const b=node.getAttribute(attr),a=tr(b);if(a!==b)node.setAttribute(attr,a);}});
    [...node.childNodes].forEach(translateNode);
  }
@@ -1245,7 +1236,7 @@ tr.inseam-row .cell-inseam { display: block !important; margin: 0; padding: 0; b
  }
  const oa=window.alert.bind(window),oc=window.confirm.bind(window);window.alert=m=>oa(tr(m));window.confirm=m=>oc(tr(m));window.uniformTranslate=tr;
  Promise.all([fetch("languages.json",{cache:"no-store"}).then(r=>r.json()),fetch("translations.json",{cache:"no-store"}).then(r=>r.json())]).then(([ld,td])=>{
-   sourceMap=td.sourceMap||sourceMap;window.uniformTranslations=td.translations||{};selector(ld);document.documentElement.lang=lang;applying=true;translateNode(document.body);applying=false;
+   sourceMap=td.sourceMap||sourceMap;selector(ld);document.documentElement.lang=lang;applying=true;translateNode(document.body);applying=false;
    new MutationObserver(rs=>{if(applying||lang===DEF)return;applying=true;rs.forEach(r=>r.addedNodes.forEach(translateNode));applying=false;}).observe(document.body,{childList:true,subtree:true});
  }).catch(e=>console.warn("Translation files could not be loaded.",e));
 })();
@@ -1574,18 +1565,9 @@ function setupBasicInfoVisibility() {
  }
 }
 function renderStepProgress(active){
- const items=isEmployeeNoActive()
-   ? [['employee','1','index.step.employeeNo','職員番号','rosterProgressEmployee'],['name','2','index.step.name','姓名・セイメイ','rosterProgressName'],['details','3','index.step.basicInfo','基本情報の確認','rosterProgressDetails']]
-   : [['name','1','index.step.name','姓名・セイメイ','rosterProgressName'],['details','2','index.step.basicInfo','基本情報の確認','rosterProgressDetails']];
+ const items=isEmployeeNoActive()?[['employee','1 職員番号'],['name','2 姓名・セイメイ'],['details','3 基本情報の確認']]:[['name','1 姓名・セイメイ'],['details','2 基本情報の確認']];
  const area=document.getElementById("rosterStepProgress");area.innerHTML="";
- items.forEach(([stepKey,number,i18nKey,japanese,sourceId])=>{
-   const e=document.createElement("span");
-   const numberNode=document.createElement("span");numberNode.className="roster-progress-number";numberNode.textContent=number;
-   const labelNode=document.createElement("span");labelNode.id=sourceId;labelNode.setAttribute("data-i18n",i18nKey);labelNode.textContent=japanese;
-   e.append(numberNode,document.createTextNode(" "),labelNode);
-   e.classList.toggle("active",stepKey===active);area.appendChild(e);
- });
- if(window.uniformTranslate) translateNode(area);
+ items.forEach(([key,label])=>{const e=document.createElement("span");e.textContent=label;e.classList.toggle("active",key===active);area.appendChild(e);});
 }
 function setRosterStep(step){
  rosterStepCurrent=step;
