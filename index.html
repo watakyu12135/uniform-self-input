@@ -1,10 +1,10 @@
 <!DOCTYPE html>
+
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8"/>
 <title>ユニフォーム申請</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <style>
 body {
   font-family: sans-serif;
@@ -1001,258 +1001,328 @@ tr.inseam-row .cell-inseam { display: block !important; margin: 0; padding: 0; b
 }
 
 </style>
-</head>
-
+<style id="uniformI18nStyle">
+.uniform-language-selector{position:sticky;top:0;z-index:9999;display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:8px 12px;background:#fff;border-bottom:1px solid #d9e2ec;font-size:13px;color:#334155}
+.uniform-language-selector select{min-width:130px;padding:7px 30px 7px 10px;border:1px solid #94a3b8;border-radius:8px;background:#fff;color:#0f172a;font-size:14px}
+@media(max-width:600px){.uniform-language-selector{position:relative;padding:7px 10px}.uniform-language-selector label{font-size:12px}.uniform-language-selector select{min-width:120px}}
+</style></head>
 <body>
-
 <div class="page-shell">
-  <header class="site-header">
-    <div class="brand-row">
-      <div>
-        <img
-          class="company-logo"
-          src="images/company-logo.png"
-          alt="ワタキューセイモア株式会社"
-          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
-        >
-        <div class="logo-fallback">ワタキューセイモア株式会社</div>
-      </div>
-      <div id="policyLink">
-        <a href="privacy.html">プライバシーポリシー・免責事項</a>
-      </div>
-    </div>
-
-    <div class="page-heading">
-      <div id="customerInfo" class="customer-page-name">読み込み中... 様専用</div>
-      <h1 id="pageTitle">ユニフォーム申請受付</h1>
-    </div>
-
-    <a id="reviseLink" class="revise-card" href="revise.html">
-      <span class="revise-card-kicker">すでに申請済みの方</span>
-      <span class="revise-card-action">
-        <span>✎ 入力内容の修正はこちら</span>
-        <span aria-hidden="true">›</span>
-      </span>
-    </a>
-  </header>
-
-  <section class="basic-info-card" aria-labelledby="basicInfoTitle">
-    <h2 id="basicInfoTitle" class="basic-info-title">基本情報の入力</h2>
-
-    <div id="rosterStepUi" class="hidden">
-      <div id="rosterStepProgress" class="roster-step-progress" aria-label="入力手順"></div>
-
-      <section id="rosterStepEmployee" class="roster-step-panel hidden">
-        <h3>職員番号を入力してください</h3>
-        
-        <div class="basic-field"><label for="stepEmployeeNo">職員番号</label><input id="stepEmployeeNo" inputmode="latin" autocomplete="off" maxlength="30"></div>
-        <div class="employee-unknown-choice"><label><input type="checkbox" id="stepEmployeeNoUnknown">職員番号が分からない場合</label></div>
-        <div class="step-actions"><button type="button" class="roster-search-button primary-action" id="stepEmployeeSearchButton">名簿を検索</button></div>
-      </section>
-
-      <section id="rosterStepName" class="roster-step-panel hidden">
-        <h3>姓名・セイメイを入力してください</h3>
-        <p class="step-help">姓・名・セイ・メイをすべて入力してから名簿を検索してください。</p>
-        <div class="name-area">
-          <div class="name-field"><label for="stepSei">姓</label><input id="stepSei" autocomplete="family-name"></div>
-          <div class="name-field"><label for="stepMei">名</label><input id="stepMei" autocomplete="given-name"></div>
-          <div class="name-field"><label for="stepSeiKana">セイ</label><input id="stepSeiKana" inputmode="katakana" autocomplete="off"></div>
-          <div class="name-field"><label for="stepMeiKana">メイ</label><input id="stepMeiKana" inputmode="katakana" autocomplete="off"></div>
-        </div>
-        <div class="step-actions"><button type="button" class="roster-search-button primary-action" id="stepNameSearchButton">名簿を検索</button><button type="button" class="secondary-action" id="stepNameBackButton">戻る</button></div>
-      </section>
-
-      <section id="rosterStepCandidates" class="roster-step-panel hidden">
-        <h3>該当する名簿を選択してください</h3>
-        <p class="step-help">入力内容に一致する名簿が見つかりました。該当する情報を選択してください。</p>
-        <div id="rosterCandidateOptions"></div>
-        <div class="step-actions"><button type="button" class="roster-search-button primary-action" id="stepCandidateNextButton">選択した内容で進む</button><button type="button" class="secondary-action" id="stepCandidateBackButton">戻る</button></div>
-      </section>
-
-      <section id="rosterStepDetails" class="roster-step-panel hidden">
-        <h3>基本情報を確認してください</h3>
-        <p class="step-help">名簿に登録がない項目、または現在の内容と異なる項目は選択し直してください。</p>
-        <div id="rosterStepSummary" class="roster-confirm-list hidden"></div>
-        <div class="basic-select-field"><label for="stepGender">性別</label><select id="stepGender"><option value="">選択</option><option value="男性">男性</option><option value="女性">女性</option></select></div>
-        <div class="uniform-type-choice hidden" aria-hidden="true"><label><input type="checkbox" id="stepAlternateUniform" tabindex="-1">登録された性別と異なるユニフォームを選ぶ</label><div id="stepUniformTypeStatus" class="uniform-type-status"></div></div>
-        <div class="basic-select-field"><label for="stepJob">職種</label><select id="stepJob"><option value="">選択</option></select></div>
-        <div id="stepDepartmentArea" class="basic-select-field hidden"><label for="stepDepartment">部署</label><select id="stepDepartment"><option value="">選択</option></select></div>
-        <p id="stepDepartmentHelp" class="step-help hidden">部署が分からない場合は「不明」を選択してください。</p>
-        <div class="step-actions"><button type="button" class="roster-search-button primary-action" id="stepDetailsCompleteButton">この内容で進む</button><button type="button" class="secondary-action" id="stepDetailsBackButton">戻る</button></div>
-      </section>
-      <div id="stepRosterSearchResult" class="roster-search-result" role="status" aria-live="polite"></div>
-    </div>
-
-    <div id="standardBasicInfoUi">
-      <div id="employeeNoArea" class="basic-field hidden"><label for="employeeNo">職員番号</label><input id="employeeNo" inputmode="latin" autocomplete="off" maxlength="30" oninput="normalizeEmployeeNoInput(this); resetRosterSearchForInputChange()"></div>
-      <div class="name-area">
-        <div class="name-field"><label for="sei">姓</label><input id="sei" inputmode="text" autocomplete="family-name" oninput="resetRosterSearchForInputChange()"></div>
-        <div class="name-field"><label for="mei">名</label><input id="mei" inputmode="text" autocomplete="given-name" oninput="resetRosterSearchForInputChange()"></div>
-        <div class="name-field"><label for="seiKana">セイ</label><input id="seiKana" inputmode="katakana" autocomplete="off" oninput="resetRosterSearchForInputChange()"></div>
-        <div class="name-field"><label for="meiKana">メイ</label><input id="meiKana" inputmode="katakana" autocomplete="off" oninput="resetRosterSearchForInputChange()"></div>
-      </div>
-      <div class="basic-select-field"><label for="gender">性別</label><select id="gender" onchange="changeGender()"><option value="">選択</option><option value="男性">男性</option><option value="女性">女性</option></select></div>
-      <div class="uniform-type-choice"><label><input type="checkbox" id="alternateUniformType" onchange="changeUniformTypeChoice(this)">登録された性別と異なるユニフォームを選ぶ</label><div id="uniformTypeStatus" class="uniform-type-status"></div></div>
-      <div class="basic-select-field"><label for="job">職種</label><select id="job" onchange="changeJob()"><option value="">選択</option></select></div>
-      <div id="departmentArea" class="basic-select-field hidden"><label for="department">部署</label><select id="department" onchange="resetRosterSearchForInputChange()"><option value="">選択</option></select></div>
-      <div id="departmentHelp" class="field-help hidden">部署が分からない場合は「不明」を選択してください。</div>
-      <div id="rosterSearchArea" class="roster-search-area hidden"><button type="button" id="rosterSearchButton" class="roster-search-button" onclick="searchRoster()">名簿検索</button><div id="rosterSearchResult" class="roster-search-result" role="status" aria-live="polite"></div></div>
-    </div>
-    <div id="lendingPatternArea" class="basic-select-field pattern-field hidden"><label>貸与パターン</label><div id="lendingPatternOptions" class="pattern-options"></div></div>
-  </section>
+<header class="site-header">
+<div class="brand-row">
+<div>
+<img alt="ワタキューセイモア株式会社" class="company-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" src="images/company-logo.png"/>
+<div class="logo-fallback">ワタキューセイモア株式会社</div>
+</div>
+<div id="policyLink">
+<a href="privacy.html">プライバシーポリシー・免責事項</a>
+</div>
+</div>
+<div class="page-heading">
+<div class="customer-page-name" id="customerInfo">読み込み中... 様専用</div>
+<h1 id="pageTitle">ユニフォーム申請受付</h1>
+</div>
+<a class="revise-card" href="revise.html" id="reviseLink">
+<span class="revise-card-kicker">すでに申請済みの方</span>
+<span class="revise-card-action">
+<span>✎ 入力内容の修正はこちら</span>
+<span aria-hidden="true">›</span>
+</span>
+</a>
+</header>
+<section aria-labelledby="basicInfoTitle" class="basic-info-card">
+<h2 class="basic-info-title" id="basicInfoTitle">基本情報の入力</h2>
+<div class="hidden" id="rosterStepUi">
+<div aria-label="入力手順" class="roster-step-progress" id="rosterStepProgress"></div>
+<section class="roster-step-panel hidden" id="rosterStepEmployee">
+<h3>職員番号を入力してください</h3>
+<div class="basic-field"><label for="stepEmployeeNo">職員番号</label><input autocomplete="off" id="stepEmployeeNo" inputmode="latin" maxlength="30"/></div>
+<div class="employee-unknown-choice"><label><input id="stepEmployeeNoUnknown" type="checkbox"/>職員番号が分からない場合</label></div>
+<div class="step-actions"><button class="roster-search-button primary-action" id="stepEmployeeSearchButton" type="button">名簿を検索</button></div>
+</section>
+<section class="roster-step-panel hidden" id="rosterStepName">
+<h3>姓名・セイメイを入力してください</h3>
+<p class="step-help">姓・名・セイ・メイをすべて入力してから名簿を検索してください。</p>
+<div class="name-area">
+<div class="name-field"><label for="stepSei">姓</label><input autocomplete="family-name" id="stepSei"/></div>
+<div class="name-field"><label for="stepMei">名</label><input autocomplete="given-name" id="stepMei"/></div>
+<div class="name-field"><label for="stepSeiKana">セイ</label><input autocomplete="off" id="stepSeiKana" inputmode="katakana"/></div>
+<div class="name-field"><label for="stepMeiKana">メイ</label><input autocomplete="off" id="stepMeiKana" inputmode="katakana"/></div>
+</div>
+<div class="step-actions"><button class="roster-search-button primary-action" id="stepNameSearchButton" type="button">名簿を検索</button><button class="secondary-action" id="stepNameBackButton" type="button">戻る</button></div>
+</section>
+<section class="roster-step-panel hidden" id="rosterStepCandidates">
+<h3>該当する名簿を選択してください</h3>
+<p class="step-help">入力内容に一致する名簿が見つかりました。該当する情報を選択してください。</p>
+<div id="rosterCandidateOptions"></div>
+<div class="step-actions"><button class="roster-search-button primary-action" id="stepCandidateNextButton" type="button">選択した内容で進む</button><button class="secondary-action" id="stepCandidateBackButton" type="button">戻る</button></div>
+</section>
+<section class="roster-step-panel hidden" id="rosterStepDetails">
+<h3>基本情報を確認してください</h3>
+<p class="step-help">名簿に登録がない項目、または現在の内容と異なる項目は選択し直してください。</p>
+<div class="roster-confirm-list hidden" id="rosterStepSummary"></div>
+<div class="basic-select-field"><label for="stepGender">性別</label><select id="stepGender"><option value="">選択</option><option value="男性">男性</option><option value="女性">女性</option></select></div>
+<div aria-hidden="true" class="uniform-type-choice hidden"><label><input id="stepAlternateUniform" tabindex="-1" type="checkbox"/>登録された性別と異なるユニフォームを選ぶ</label><div class="uniform-type-status" id="stepUniformTypeStatus"></div></div>
+<div class="basic-select-field"><label for="stepJob">職種</label><select id="stepJob"><option value="">選択</option></select></div>
+<div class="basic-select-field hidden" id="stepDepartmentArea"><label for="stepDepartment">部署</label><select id="stepDepartment"><option value="">選択</option></select></div>
+<p class="step-help hidden" id="stepDepartmentHelp">部署が分からない場合は「不明」を選択してください。</p>
+<div class="step-actions"><button class="roster-search-button primary-action" id="stepDetailsCompleteButton" type="button">この内容で進む</button><button class="secondary-action" id="stepDetailsBackButton" type="button">戻る</button></div>
+</section>
+<div aria-live="polite" class="roster-search-result" id="stepRosterSearchResult" role="status"></div>
+</div>
+<div id="standardBasicInfoUi">
+<div class="basic-field hidden" id="employeeNoArea"><label for="employeeNo">職員番号</label><input autocomplete="off" id="employeeNo" inputmode="latin" maxlength="30" oninput="normalizeEmployeeNoInput(this); resetRosterSearchForInputChange()"/></div>
+<div class="name-area">
+<div class="name-field"><label for="sei">姓</label><input autocomplete="family-name" id="sei" inputmode="text" oninput="resetRosterSearchForInputChange()"/></div>
+<div class="name-field"><label for="mei">名</label><input autocomplete="given-name" id="mei" inputmode="text" oninput="resetRosterSearchForInputChange()"/></div>
+<div class="name-field"><label for="seiKana">セイ</label><input autocomplete="off" id="seiKana" inputmode="katakana" oninput="resetRosterSearchForInputChange()"/></div>
+<div class="name-field"><label for="meiKana">メイ</label><input autocomplete="off" id="meiKana" inputmode="katakana" oninput="resetRosterSearchForInputChange()"/></div>
+</div>
+<div class="basic-select-field"><label for="gender">性別</label><select id="gender" onchange="changeGender()"><option value="">選択</option><option value="男性">男性</option><option value="女性">女性</option></select></div>
+<div class="uniform-type-choice"><label><input id="alternateUniformType" onchange="changeUniformTypeChoice(this)" type="checkbox"/>登録された性別と異なるユニフォームを選ぶ</label><div class="uniform-type-status" id="uniformTypeStatus"></div></div>
+<div class="basic-select-field"><label for="job">職種</label><select id="job" onchange="changeJob()"><option value="">選択</option></select></div>
+<div class="basic-select-field hidden" id="departmentArea"><label for="department">部署</label><select id="department" onchange="resetRosterSearchForInputChange()"><option value="">選択</option></select></div>
+<div class="field-help hidden" id="departmentHelp">部署が分からない場合は「不明」を選択してください。</div>
+<div class="roster-search-area hidden" id="rosterSearchArea"><button class="roster-search-button" id="rosterSearchButton" onclick="searchRoster()" type="button">名簿検索</button><div aria-live="polite" class="roster-search-result" id="rosterSearchResult" role="status"></div></div>
+</div>
+<div class="basic-select-field pattern-field hidden" id="lendingPatternArea"><label>貸与パターン</label><div class="pattern-options" id="lendingPatternOptions"></div></div>
+</section>
 <div id="productSelectionArea">
 <div id="limitDeclarationArea"></div>
-
 <div class="table-wrap">
-  <table id="table"></table>
+<table id="table"></table>
 </div>
-
 <div id="categoryStatus"></div>
-
 <div class="step-actions product-action-buttons">
-  <button type="button" id="submitButton" class="primary-action" onclick="submitData(event)">確認</button>
-  <button type="button" id="backToBasicInfoButton" class="secondary-action hidden" onclick="backToBasicInfoFromProducts()">戻る</button>
-</div>
-
+<button class="primary-action" id="submitButton" onclick="submitData(event)" type="button">確認</button>
+<button class="secondary-action hidden" id="backToBasicInfoButton" onclick="backToBasicInfoFromProducts()" type="button">戻る</button>
 </div>
 </div>
-<div id="measurementArea" class="hidden measurement-area">
-
-  <h2>別寸採寸表入力</h2>
-
-  <div id="measurementMessage"></div>
-
-  <div class="measurement-guide" id="measurementGuide">
-    <strong>採寸図：</strong><br>
-    <div class="measurement-image-wrapper" id="measurementImageWrapper">
-      <img src="images/measurement-guide.png" alt="採寸図。図中のアルファベットをタップすると対応する入力欄へ移動します。" class="measurement-image">
-      <button type="button" class="measure-hit hit-A" data-field="m_A" data-point="A" aria-label="A 衿回りの入力欄へ移動"></button>
-      <button type="button" class="measure-hit hit-B" data-field="m_B" data-point="B" aria-label="B 肩巾の入力欄へ移動"></button>
-      <button type="button" class="measure-hit hit-C" data-field="m_C1" data-point="C" aria-label="C 袖丈の入力欄へ移動"></button>
-      <button type="button" class="measure-hit hit-D" data-field="m_D" data-point="D" aria-label="D 胸回りの入力欄へ移動"></button>
-      <button type="button" class="measure-hit hit-E-upper" data-field="m_E" data-point="E-upper" aria-label="上衣 E 胴回りの入力欄へ移動"></button>
-      <button type="button" class="measure-hit hit-F-upper" data-field="m_F" data-point="F-upper" aria-label="上衣 F 腰回りの入力欄へ移動"></button>
-      <button type="button" class="measure-hit hit-G" data-field="m_G" data-point="G" aria-label="G 背丈の入力欄へ移動"></button>
-      <button type="button" class="measure-hit hit-H" data-field="m_H" data-point="H" aria-label="H 着丈の入力欄へ移動"></button>
-      <button type="button" class="measure-hit hit-I" data-field="m_I" data-point="I" aria-label="I 袖付回りの入力欄へ移動"></button>
-      <button type="button" class="measure-hit hit-e-lower" data-field="m_a" data-point="e-lower" aria-label="下衣 e 胴回りの入力欄へ移動"></button>
-      <button type="button" class="measure-hit hit-f-lower" data-field="m_b" data-point="f-lower" aria-label="下衣 f 腰回りの入力欄へ移動"></button>
-      <button type="button" class="measure-hit hit-J" data-field="m_c" data-point="J" aria-label="J 股上の入力欄へ移動"></button>
-      <button type="button" class="measure-hit hit-K" data-field="m_d" data-point="K" aria-label="K 股下の入力欄へ移動"></button>
-      <button type="button" class="measure-hit hit-L" data-field="m_e" data-point="L" aria-label="L 総丈の入力欄へ移動"></button>
-      <button type="button" class="measure-hit hit-M" data-field="m_f" data-point="M" aria-label="M 太股回りの入力欄へ移動"></button>
-    </div>
-    <div class="measurement-guide-note">図中のアルファベットをタップすると、対応する入力欄へ移動します。</div>
-  </div>
-
-  <div class="measurement-nude-notice" role="alert">
+</div>
+<div class="hidden measurement-area" id="measurementArea">
+<h2>別寸採寸表入力</h2>
+<div id="measurementMessage"></div>
+<div class="measurement-guide" id="measurementGuide">
+<strong>採寸図：</strong><br/>
+<div class="measurement-image-wrapper" id="measurementImageWrapper">
+<img alt="採寸図。図中のアルファベットをタップすると対応する入力欄へ移動します。" class="measurement-image" src="images/measurement-guide.png"/>
+<button aria-label="A 衿回りの入力欄へ移動" class="measure-hit hit-A" data-field="m_A" data-point="A" type="button"></button>
+<button aria-label="B 肩巾の入力欄へ移動" class="measure-hit hit-B" data-field="m_B" data-point="B" type="button"></button>
+<button aria-label="C 袖丈の入力欄へ移動" class="measure-hit hit-C" data-field="m_C1" data-point="C" type="button"></button>
+<button aria-label="D 胸回りの入力欄へ移動" class="measure-hit hit-D" data-field="m_D" data-point="D" type="button"></button>
+<button aria-label="上衣 E 胴回りの入力欄へ移動" class="measure-hit hit-E-upper" data-field="m_E" data-point="E-upper" type="button"></button>
+<button aria-label="上衣 F 腰回りの入力欄へ移動" class="measure-hit hit-F-upper" data-field="m_F" data-point="F-upper" type="button"></button>
+<button aria-label="G 背丈の入力欄へ移動" class="measure-hit hit-G" data-field="m_G" data-point="G" type="button"></button>
+<button aria-label="H 着丈の入力欄へ移動" class="measure-hit hit-H" data-field="m_H" data-point="H" type="button"></button>
+<button aria-label="I 袖付回りの入力欄へ移動" class="measure-hit hit-I" data-field="m_I" data-point="I" type="button"></button>
+<button aria-label="下衣 e 胴回りの入力欄へ移動" class="measure-hit hit-e-lower" data-field="m_a" data-point="e-lower" type="button"></button>
+<button aria-label="下衣 f 腰回りの入力欄へ移動" class="measure-hit hit-f-lower" data-field="m_b" data-point="f-lower" type="button"></button>
+<button aria-label="J 股上の入力欄へ移動" class="measure-hit hit-J" data-field="m_c" data-point="J" type="button"></button>
+<button aria-label="K 股下の入力欄へ移動" class="measure-hit hit-K" data-field="m_d" data-point="K" type="button"></button>
+<button aria-label="L 総丈の入力欄へ移動" class="measure-hit hit-L" data-field="m_e" data-point="L" type="button"></button>
+<button aria-label="M 太股回りの入力欄へ移動" class="measure-hit hit-M" data-field="m_f" data-point="M" type="button"></button>
+</div>
+<div class="measurement-guide-note">図中のアルファベットをタップすると、対応する入力欄へ移動します。</div>
+</div>
+<div class="measurement-nude-notice" role="alert">
     採寸はヌード寸法でご記入ください。
   </div>
-  <section class="measure-section" id="measureCommon">
-    <h3>共通項目</h3>
-
-    <label>身長</label>
-    <input type="number" id="m_height"> cm<br>
-
-    <label>体重</label>
-    <input type="number" id="m_weight"> kg<br>
-
-  </section>
-
-  <section class="measure-section" id="measureUpper">
-    <h3>上衣採寸</h3>
-
-    <label class="measure-jump-label" data-image-point="A" tabindex="0" role="button">A_衿回り</label>
-    <input type="number" id="m_A"> cm
+<section class="measure-section" id="measureCommon">
+<h3>共通項目</h3>
+<label>身長</label>
+<input id="m_height" type="number"/> cm<br/>
+<label>体重</label>
+<input id="m_weight" type="number"/> kg<br/>
+</section>
+<section class="measure-section" id="measureUpper">
+<h3>上衣採寸</h3>
+<label class="measure-jump-label" data-image-point="A" role="button" tabindex="0">A_衿回り</label>
+<input id="m_A" type="number"/> cm
     <div class="measure-help">のどぼとけのすぐ下で測る。</div>
-
-    <label class="measure-jump-label" data-image-point="B" tabindex="0" role="button">B_肩巾</label>
-    <input type="number" id="m_B"> cm
+<label class="measure-jump-label" data-image-point="B" role="button" tabindex="0">B_肩巾</label>
+<input id="m_B" type="number"/> cm
     <div class="measure-help">左、右の肩先まで測る。</div>
-
-    <label class="measure-jump-label" data-image-point="C" tabindex="0" role="button">C1_袖丈_半袖</label>
-    <input type="number" id="m_C1"> cm<br>
-
-    <label class="measure-jump-label" data-image-point="C" tabindex="0" role="button">C2_袖丈_七分袖</label>
-    <input type="number" id="m_C2"> cm<br>
-
-    <label class="measure-jump-label" data-image-point="C" tabindex="0" role="button">C3_袖丈_長袖</label>
-    <input type="number" id="m_C3"> cm
+<label class="measure-jump-label" data-image-point="C" role="button" tabindex="0">C1_袖丈_半袖</label>
+<input id="m_C1" type="number"/> cm<br/>
+<label class="measure-jump-label" data-image-point="C" role="button" tabindex="0">C2_袖丈_七分袖</label>
+<input id="m_C2" type="number"/> cm<br/>
+<label class="measure-jump-label" data-image-point="C" role="button" tabindex="0">C3_袖丈_長袖</label>
+<input id="m_C3" type="number"/> cm
 
     <div class="measure-help">
-      肩先から本人希望の長さ。該当する袖丈のみ入力してください。<br>
+      肩先から本人希望の長さ。該当する袖丈のみ入力してください。<br/>
       ※半袖の商品を長袖で製作することはできません。
     </div>
-
-    <label class="measure-jump-label" data-image-point="D" tabindex="0" role="button">D_胸回り</label>
-    <input type="number" id="m_D"> cm
+<label class="measure-jump-label" data-image-point="D" role="button" tabindex="0">D_胸回り</label>
+<input id="m_D" type="number"/> cm
     <div class="measure-help">脇のすぐ下で水平にメジャーを回して測る。</div>
-
-    <label class="measure-jump-label" data-image-point="E-upper" tabindex="0" role="button">E_胴回り</label>
-    <input type="number" id="m_E" oninput="syncLinkedMeasurement(this, 'm_a')" onchange="syncLinkedMeasurement(this, 'm_a')"> cm
+<label class="measure-jump-label" data-image-point="E-upper" role="button" tabindex="0">E_胴回り</label>
+<input id="m_E" onchange="syncLinkedMeasurement(this, 'm_a')" oninput="syncLinkedMeasurement(this, 'm_a')" type="number"/> cm
     <div class="measure-help">ベルトの上、へそのあたりを測る。</div>
-
-    <label class="measure-jump-label" data-image-point="F-upper" tabindex="0" role="button">F_腰回り</label>
-    <input type="number" id="m_F" oninput="syncLinkedMeasurement(this, 'm_b')" onchange="syncLinkedMeasurement(this, 'm_b')"> cm
+<label class="measure-jump-label" data-image-point="F-upper" role="button" tabindex="0">F_腰回り</label>
+<input id="m_F" onchange="syncLinkedMeasurement(this, 'm_b')" oninput="syncLinkedMeasurement(this, 'm_b')" type="number"/> cm
     <div class="measure-help">腰の一番張ったところを測る。</div>
-
-    <label class="measure-jump-label" data-image-point="G" tabindex="0" role="button">G_背丈</label>
-    <input type="number" id="m_G"> cm
+<label class="measure-jump-label" data-image-point="G" role="button" tabindex="0">G_背丈</label>
+<input id="m_G" type="number"/> cm
     <div class="measure-help">首の付け根の中心から胴回りの測定位置まで。</div>
-
-    <label class="measure-jump-label" data-image-point="H" tabindex="0" role="button">H_着丈</label>
-    <input type="number" id="m_H"> cm
+<label class="measure-jump-label" data-image-point="H" role="button" tabindex="0">H_着丈</label>
+<input id="m_H" type="number"/> cm
     <div class="measure-help">首の付け根の中心から本人希望の長さまで。</div>
-
-    <label class="measure-jump-label" data-image-point="I" tabindex="0" role="button">I_袖付回り</label>
-    <input type="number" id="m_I"> cm
+<label class="measure-jump-label" data-image-point="I" role="button" tabindex="0">I_袖付回り</label>
+<input id="m_I" type="number"/> cm
     <div class="measure-help">肩先から腕の付け根部分回りを測る。</div>
-  </section>
-
-  <section class="measure-section" id="measureLower">
-    <h3>下衣採寸</h3>
-
-    <label class="measure-jump-label" data-image-point="e-lower" tabindex="0" role="button">e_胴回り</label>
-    <input type="number" id="m_a" oninput="syncLinkedMeasurement(this, 'm_E')" onchange="syncLinkedMeasurement(this, 'm_E')"> cm
+</section>
+<section class="measure-section" id="measureLower">
+<h3>下衣採寸</h3>
+<label class="measure-jump-label" data-image-point="e-lower" role="button" tabindex="0">e_胴回り</label>
+<input id="m_a" onchange="syncLinkedMeasurement(this, 'm_E')" oninput="syncLinkedMeasurement(this, 'm_E')" type="number"/> cm
     <div class="measure-help">ベルトの上、へそのあたりを測る。</div>
-
-    <label class="measure-jump-label" data-image-point="f-lower" tabindex="0" role="button">f_腰回り</label>
-    <input type="number" id="m_b" oninput="syncLinkedMeasurement(this, 'm_F')" onchange="syncLinkedMeasurement(this, 'm_F')"> cm
+<label class="measure-jump-label" data-image-point="f-lower" role="button" tabindex="0">f_腰回り</label>
+<input id="m_b" onchange="syncLinkedMeasurement(this, 'm_F')" oninput="syncLinkedMeasurement(this, 'm_F')" type="number"/> cm
     <div class="measure-help">腰の一番張ったところを測る。</div>
-
-    <label class="measure-jump-label" data-image-point="J" tabindex="0" role="button">J_股上</label>
-    <input type="number" id="m_c"> cm
+<label class="measure-jump-label" data-image-point="J" role="button" tabindex="0">J_股上</label>
+<input id="m_c" type="number"/> cm
     <div class="measure-help">胴回り位置から股下までを測る。</div>
-
-    <label class="measure-jump-label" data-image-point="K" tabindex="0" role="button">K_股下</label>
-    <input type="number" id="m_d"> cm
+<label class="measure-jump-label" data-image-point="K" role="button" tabindex="0">K_股下</label>
+<input id="m_d" type="number"/> cm
     <div class="measure-help">股下より本人希望の長さ。</div>
-
-    <label class="measure-jump-label" data-image-point="L" tabindex="0" role="button">L_総丈</label>
-    <input type="number" id="m_e"> cm
+<label class="measure-jump-label" data-image-point="L" role="button" tabindex="0">L_総丈</label>
+<input id="m_e" type="number"/> cm
     <div class="measure-help">胴回り位置からズボン裾まで。</div>
-
-    <label class="measure-jump-label" data-image-point="M" tabindex="0" role="button">M_太股回り</label>
-    <input type="number" id="m_f"> cm
+<label class="measure-jump-label" data-image-point="M" role="button" tabindex="0">M_太股回り</label>
+<input id="m_f" type="number"/> cm
     <div class="measure-help">股下より10cm下がった位置を測る。</div>
-  </section>
-
-  <section class="measure-section">
-    <h3>特記事項・備考</h3>
-
-    <label>特記事項</label><br>
-    <textarea id="m_specialNote" rows="3"></textarea><br>
-
-    <label>備考</label><br>
-    <textarea id="m_memo" rows="3"></textarea>
-  </section>
-
-  <button onclick="saveMeasurement()">採寸表を保存して戻る</button>
-  <button onclick="cancelMeasurement()">保存せず戻る</button>
-
+</section>
+<section class="measure-section">
+<h3>特記事項・備考</h3>
+<label>特記事項</label><br/>
+<textarea id="m_specialNote" rows="3"></textarea><br/>
+<label>備考</label><br/>
+<textarea id="m_memo" rows="3"></textarea>
+</section>
+<button onclick="saveMeasurement()">採寸表を保存して戻る</button>
+<button onclick="cancelMeasurement()">保存せず戻る</button>
 </div>
+<script id="uniformI18nRuntime">
+(() => {
+  "use strict";
+  const STORAGE_KEY = "uniformLanguage";
+  const DEFAULT_LANGUAGE = "ja";
+  const SUPPORTED = ["ja", "en", "vi"];
+  let currentLanguage = SUPPORTED.includes(localStorage.getItem(STORAGE_KEY)) ? localStorage.getItem(STORAGE_KEY) : DEFAULT_LANGUAGE;
+  let sourceMap = { en: {}, vi: {} };
+  let applying = false;
 
-<script>
+  const normalizeBreaks = value => String(value ?? "").replace(/\\n/g, "\n");
+  const escapeRegExp = value => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  function translateTemplate(text) {
+    if (currentLanguage === DEFAULT_LANGUAGE || !text) return text;
+    const map = sourceMap[currentLanguage] || {};
+    const raw = String(text);
+    if (Object.prototype.hasOwnProperty.call(map, raw)) return normalizeBreaks(map[raw]);
+    const trimmed = raw.trim();
+    if (Object.prototype.hasOwnProperty.call(map, trimmed)) {
+      return raw.replace(trimmed, normalizeBreaks(map[trimmed]));
+    }
+    for (const [ja, translated] of Object.entries(map)) {
+      if (!ja.includes("{") || !ja.includes("}")) continue;
+      const names = [...ja.matchAll(/\{([^{}]+)\}/g)].map(m => m[1]);
+      let pattern = escapeRegExp(ja);
+      names.forEach(name => { pattern = pattern.replace(escapeRegExp("{" + name + "}"), "(.+?)"); });
+      const match = raw.match(new RegExp("^" + pattern + "$"));
+      if (!match) continue;
+      let result = normalizeBreaks(translated);
+      names.forEach((name, index) => { result = result.replaceAll("{" + name + "}", match[index + 1]); });
+      return result;
+    }
+    return raw;
+  }
+
+  function translateNode(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const before = node.nodeValue;
+      const after = translateTemplate(before);
+      if (after !== before) node.nodeValue = after;
+      return;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+    if (node.closest("script,style,[data-i18n-ignore]")) return;
+    ["placeholder", "title", "aria-label", "value"].forEach(attr => {
+      if (!node.hasAttribute(attr)) return;
+      if (attr === "value" && !["BUTTON", "INPUT", "OPTION"].includes(node.tagName)) return;
+      const before = node.getAttribute(attr);
+      const after = translateTemplate(before);
+      if (after !== before) node.setAttribute(attr, after);
+    });
+    [...node.childNodes].forEach(translateNode);
+  }
+
+  function applyLanguage(language) {
+    currentLanguage = SUPPORTED.includes(language) ? language : DEFAULT_LANGUAGE;
+    localStorage.setItem(STORAGE_KEY, currentLanguage);
+    document.documentElement.lang = currentLanguage;
+    applying = true;
+    translateNode(document.body);
+    applying = false;
+    document.dispatchEvent(new CustomEvent("uniformLanguageChanged", { detail: { language: currentLanguage } }));
+  }
+
+  function createSelector(languageData) {
+    if (document.getElementById("uniformLanguageSelector")) return;
+    const wrap = document.createElement("div");
+    wrap.id = "uniformLanguageSelector";
+    wrap.className = "uniform-language-selector";
+    wrap.setAttribute("data-i18n-ignore", "true");
+    const label = document.createElement("label");
+    label.htmlFor = "uniformLanguageSelect";
+    label.textContent = "Language / Ngôn ngữ";
+    const select = document.createElement("select");
+    select.id = "uniformLanguageSelect";
+    (languageData.languages || []).sort((a,b) => a.order - b.order).forEach(item => {
+      const option = document.createElement("option");
+      option.value = item.code;
+      option.textContent = item.displayName;
+      option.selected = item.code === currentLanguage;
+      select.appendChild(option);
+    });
+    select.addEventListener("change", () => {
+      localStorage.setItem(STORAGE_KEY, select.value);
+      location.reload();
+    });
+    wrap.append(label, select);
+    document.body.prepend(wrap);
+  }
+
+  const originalAlert = window.alert.bind(window);
+  const originalConfirm = window.confirm.bind(window);
+  window.alert = message => originalAlert(translateTemplate(message));
+  window.confirm = message => originalConfirm(translateTemplate(message));
+  window.uniformTranslate = translateTemplate;
+
+  Promise.all([
+    fetch("languages.json", { cache: "no-store" }).then(r => { if (!r.ok) throw new Error("languages.json"); return r.json(); }),
+    fetch("translations.json", { cache: "no-store" }).then(r => { if (!r.ok) throw new Error("translations.json"); return r.json(); })
+  ]).then(([languageData, translationData]) => {
+    sourceMap = translationData.sourceMap || { en: {}, vi: {} };
+    createSelector(languageData);
+    applyLanguage(currentLanguage);
+    new MutationObserver(records => {
+      if (applying || currentLanguage === DEFAULT_LANGUAGE) return;
+      applying = true;
+      records.forEach(record => record.addedNodes.forEach(translateNode));
+      applying = false;
+    }).observe(document.body, { childList: true, subtree: true });
+  }).catch(error => {
+    console.warn("Translation files could not be loaded. Japanese will be displayed.", error);
+    createSelector({ languages: [
+      { code: "ja", displayName: "日本語", order: 1 },
+      { code: "en", displayName: "English", order: 2 },
+      { code: "vi", displayName: "Tiếng Việt", order: 3 }
+    ]});
+  });
+})();
+</script><script>
 
 const HP_DEADLINE_FLOW_URL = "https://defaultc8b61927a8e4402d9bae737ebea8e5.6c.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/31/workflows/09d029ec44b749c1b9e34197ba1e92f6/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=G4_LY4TPfDgAkb-D1QdZP0v1TKvBKBKtT7HW_zP36Zs";
 const ROSTER_CHECK_FLOW_URL = "https://defaultc8b61927a8e4402d9bae737ebea8e5.6c.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/22/workflows/a2ad90b4288b421dba07527e957df3b6/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=mfc1Al8GnTNU9AgQ43twXYCekRC37FSDJ57x3ENuiSc";
@@ -4710,6 +4780,5 @@ if (hasBespokeWithoutMeasurement()) {
   }
 }
 </script>
-
 </body>
 </html>
