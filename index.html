@@ -4063,9 +4063,14 @@ function setInseamValueForRow(row, value) {
   const sizeInfo = getRowSizeInfo(row);
   if (sizeInfo.valid && sizeInfo.sizeType === "standard" && isCommonStandardInseamMode(row)) {
     const key = getCommonInseamKey(row);
-    if (!commonStandardInseamValues[key]) commonStandardInseamValues[key] = normalized;
-    const host = getRowsByProductCode(key)[0];
-    if (host) updateInseamAreaForRow(host, true);
+    if (!commonStandardInseamValues[key]) {
+      commonStandardInseamValues[key] = normalized;
+    }
+    const host = getRowsByProductCode(key).find(productRow =>
+      isInseamAlterable(productRow) && isCommonInseamHostRow(productRow)
+    );
+    const input = host?.querySelector(".commonStandardInseamInput");
+    if (input) input.value = commonStandardInseamValues[key];
     return;
   }
   const select = row.querySelector(".inseamSelect");
