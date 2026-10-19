@@ -113,11 +113,15 @@
         {
           "productCategory": "上衣",
           "limit": 5
+        },
+        {
+          "productCategory": "下衣",
+          "limit": 5
         }
       ],
       "conversionRules": [
         {"fromProductCategory": "上衣", "toConsumptionCategory": "上衣", "qty": 1},
-        {"fromProductCategory": "下衣", "toConsumptionCategory": "上衣", "qty": 1}
+        {"fromProductCategory": "下衣", "toConsumptionCategory": "下衣", "qty": 1}
       ],
       "categoryDisplay": [
         {
@@ -180,11 +184,15 @@
         {
           "productCategory": "上衣",
           "limit": 5
+        },
+        {
+          "productCategory": "下衣",
+          "limit": 5
         }
       ],
       "conversionRules": [
         {"fromProductCategory": "上衣", "toConsumptionCategory": "上衣", "qty": 1},
-        {"fromProductCategory": "下衣", "toConsumptionCategory": "上衣", "qty": 1}
+        {"fromProductCategory": "下衣", "toConsumptionCategory": "下衣", "qty": 1}
       ],
       "categoryDisplay": [
         {
