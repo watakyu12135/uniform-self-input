@@ -1424,7 +1424,8 @@ function changeUniformTypeChoice(checkbox) {
   const jobSelect = document.getElementById("job");
   const departmentSelect = document.getElementById("department");
   const oldJob = jobSelect.value;
-  const oldDept = departmentSelect.value || lastUniformDepartmentBeforeChange;
+  const stateDepartment = String(rosterBasicInfoState?.department || "").trim();
+  const oldDept = departmentSelect.value || lastUniformDepartmentBeforeChange || stateDepartment;
   if (departmentSelect.value) lastUniformDepartmentBeforeChange = departmentSelect.value;
 
   updateUniformTypeStatus();
@@ -1436,12 +1437,15 @@ function changeUniformTypeChoice(checkbox) {
   if (departmentAvailable) {
     departmentSelect.value = oldDept;
     lastUniformDepartmentBeforeChange = oldDept;
+    if (rosterBasicInfoState) rosterBasicInfoState.department = oldDept;
     uniformDepartmentAlertActive = false;
   } else {
     departmentSelect.value = "";
-    if (oldDept && !uniformDepartmentAlertActive) {
+    if (checkbox.checked && oldDept && !uniformDepartmentAlertActive) {
       uniformDepartmentAlertActive = true;
       alert("選択したユニフォームには現在の部署が設定されていません。部署を選択し直してください。");
+    } else if (!checkbox.checked) {
+      uniformDepartmentAlertActive = false;
     }
   }
   if (oldJob && !jobSelect.value) alert("選択したユニフォームには現在の職種が設定されていません。職種を選択し直してください。");
@@ -1715,15 +1719,15 @@ function normalizeKanaForInput(value) {
 function buildRosterBasicInfoState(candidate, source = "roster") {
   const state = {
     source,
-    employeeNo: getRosterCandidateValue(candidate, ["職員番号", "employeeNo", "staffNo"]),
-    sei: getRosterCandidateValue(candidate, ["姓", "氏", "sei"]),
-    mei: getRosterCandidateValue(candidate, ["名", "mei"]),
-    seiKana: normalizeKanaForInput(getRosterCandidateValue(candidate, ["セイ", "シ", "seiKana"])),
-    meiKana: normalizeKanaForInput(getRosterCandidateValue(candidate, ["メイ", "meiKana"])),
-    gender: getRosterCandidateValue(candidate, ["性別", "gender"]),
-    job: getRosterCandidateValue(candidate, ["職種", "job"]),
-    department: getRosterCandidateValue(candidate, ["部署", "department"]),
-    lendingGroup: getRosterCandidateValue(candidate, ["貸与グループ", "登録貸与グループ", "lendingGroup"]),
+    employeeNo: getRosterCandidateValue(candidate, ["employeeNo", "staffNo", "職員番号"]),
+    sei: getRosterCandidateValue(candidate, ["lastName", "sei", "姓", "氏"]),
+    mei: getRosterCandidateValue(candidate, ["firstName", "mei", "名"]),
+    seiKana: normalizeKanaForInput(getRosterCandidateValue(candidate, ["lastNameKana", "seiKana", "セイ", "シ"])),
+    meiKana: normalizeKanaForInput(getRosterCandidateValue(candidate, ["firstNameKana", "meiKana", "メイ"])),
+    gender: getRosterCandidateValue(candidate, ["gender", "性別"]),
+    job: getRosterCandidateValue(candidate, ["jobType", "job", "職種"]),
+    department: getRosterCandidateValue(candidate, ["department", "部署"]),
+    lendingGroup: getRosterCandidateValue(candidate, ["loanGroup", "lendingGroup", "貸与グループ", "登録貸与グループ"]),
     lendingPatternCode: getRosterCandidateValue(candidate, ["貸与パターンコード", "登録貸与パターンコード", "lendingPatternCode", "assignedPatternCode"])
   };
   state.displayName = `${state.sei}${state.mei}`;
@@ -2509,10 +2513,10 @@ function restoreConfirmReturnToStep3(base) {
   if (!isRosterManagementActive() || effectiveEditMode) return;
   const candidate = {
     employeeNo: getFirstStoredValue(base, ["職員番号", "employeeNo", "staffNo"]),
-    sei: getFirstStoredValue(base, ["姓", "氏", "sei"]),
-    mei: getFirstStoredValue(base, ["名", "mei"]),
-    seiKana: getFirstStoredValue(base, ["セイ", "シ", "seiKana"]),
-    meiKana: getFirstStoredValue(base, ["メイ", "meiKana"]),
+    sei: getFirstStoredValue(base, ["lastName", "姓", "氏", "sei"]),
+    mei: getFirstStoredValue(base, ["firstName", "名", "mei"]),
+    seiKana: getFirstStoredValue(base, ["lastNameKana", "セイ", "シ", "seiKana"]),
+    meiKana: getFirstStoredValue(base, ["firstNameKana", "メイ", "meiKana"]),
     gender: getFirstStoredValue(base, ["性別", "gender"]),
     job: getFirstStoredValue(base, ["職種", "job"]),
     department: getFirstStoredValue(base, ["部署", "department"]),
@@ -2565,10 +2569,10 @@ function applyConfirmReturnData() {
   ) || String(returnDraft.registrationNo || "").trim();
   const employeeNoInput = document.getElementById("employeeNo");
   if (employeeNoInput) employeeNoInput.value = getFirstStoredValue(base, ["職員番号", "employeeNo", "staffNo"]);
-  document.getElementById("sei").value = getFirstStoredValue(base, ["姓", "氏", "sei"]);
-  document.getElementById("mei").value = getFirstStoredValue(base, ["名", "mei"]);
-  document.getElementById("seiKana").value = getFirstStoredValue(base, ["セイ", "シ", "seiKana"]);
-  document.getElementById("meiKana").value = getFirstStoredValue(base, ["メイ", "meiKana"]);
+  document.getElementById("sei").value = getFirstStoredValue(base, ["lastName", "姓", "氏", "sei"]);
+  document.getElementById("mei").value = getFirstStoredValue(base, ["firstName", "名", "mei"]);
+  document.getElementById("seiKana").value = getFirstStoredValue(base, ["lastNameKana", "セイ", "シ", "seiKana"]);
+  document.getElementById("meiKana").value = getFirstStoredValue(base, ["firstNameKana", "メイ", "meiKana"]);
 
   const genderValue = getFirstStoredValue(base, ["性別", "gender"]);
   const jobValue = getFirstStoredValue(base, ["職種", "job"]);
@@ -2661,10 +2665,10 @@ function applyEditModeData() {
   }
 
   const employeeNo = getFirstStoredValue(base, ["職員番号", "employeeNo", "staffNo"]);
-  const sei = getFirstStoredValue(base, ["姓", "氏", "sei"]);
-  const mei = getFirstStoredValue(base, ["名", "mei"]);
-  const seiKana = getFirstStoredValue(base, ["セイ", "シ", "seiKana"]);
-  const meiKana = getFirstStoredValue(base, ["メイ", "meiKana"]);
+  const sei = getFirstStoredValue(base, ["lastName", "姓", "氏", "sei"]);
+  const mei = getFirstStoredValue(base, ["firstName", "名", "mei"]);
+  const seiKana = getFirstStoredValue(base, ["lastNameKana", "セイ", "シ", "seiKana"]);
+  const meiKana = getFirstStoredValue(base, ["firstNameKana", "メイ", "meiKana"]);
   const gender = getFirstStoredValue(base, ["性別", "gender"]);
   const job = getFirstStoredValue(base, ["職種", "job"]);
   const department = getFirstStoredValue(base, ["部署", "department"]);
