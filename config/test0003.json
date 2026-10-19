@@ -265,7 +265,7 @@
           "name": "男女兼用上衣",
           "color": "ピンク",
           "gender": "兼用",
-          "productCategory": "下衣",
+          "productCategory": "上衣",
           "measurementGroup": "上衣",
           "sizeSuffix": "サイズ",
           "inseamAlterable": 0,
@@ -290,11 +290,15 @@
         {
           "productCategory": "上衣",
           "limit": 7
+        },
+        {
+          "productCategory": "下衣",
+          "limit": 7
         }
       ],
       "conversionRules": [
         {"fromProductCategory": "上衣", "toConsumptionCategory": "上衣", "qty": 1},
-        {"fromProductCategory": "下衣", "toConsumptionCategory": "上衣", "qty": 1}
+        {"fromProductCategory": "下衣", "toConsumptionCategory": "下衣", "qty": 1}
       ],
       "categoryDisplay": [
         {
@@ -320,7 +324,7 @@
           "name": "男女兼用上衣",
           "color": "ピンク",
           "gender": "兼用",
-          "productCategory": "下衣",
+          "productCategory": "上衣",
           "measurementGroup": "上衣",
           "sizeSuffix": "サイズ",
           "inseamAlterable": 0,
