@@ -1412,18 +1412,41 @@ function resetProductAndPatternAfterUniformChange(){
  document.getElementById("table").innerHTML="<tr><td colspan='7'>貸与パターンを選択してください</td></tr>";
  document.getElementById("categoryStatus").innerHTML=""; document.getElementById("limitDeclarationArea").innerHTML="";
 }
+let lastUniformDepartmentBeforeChange = "";
+let uniformDepartmentAlertActive = false;
 function changeUniformTypeChoice(checkbox) {
-  const oldChecked=!checkbox.checked;
-  if(selectedProductExists() && !confirm("ユニフォームタイプを変更すると、現在の商品・サイズ・数量・股下加工がクリアされます。変更してよろしいですか？")){checkbox.checked=oldChecked;updateUniformTypeStatus();return;}
-  const oldJob=document.getElementById("job").value; const oldDept=document.getElementById("department").value;
-  updateUniformTypeStatus(); updateJobOptions();
-  if(Array.from(document.getElementById("job").options).some(o=>o.value===oldJob)) document.getElementById("job").value=oldJob;
-  else document.getElementById("job").value="";
+  const oldChecked = !checkbox.checked;
+  if (selectedProductExists() && !confirm("ユニフォームタイプを変更すると、現在の商品・サイズ・数量・股下加工がクリアされます。変更してよろしいですか？")) {
+    checkbox.checked = oldChecked;
+    updateUniformTypeStatus();
+    return;
+  }
+  const jobSelect = document.getElementById("job");
+  const departmentSelect = document.getElementById("department");
+  const oldJob = jobSelect.value;
+  const oldDept = departmentSelect.value || lastUniformDepartmentBeforeChange;
+  if (departmentSelect.value) lastUniformDepartmentBeforeChange = departmentSelect.value;
+
+  updateUniformTypeStatus();
+  updateJobOptions();
+  jobSelect.value = Array.from(jobSelect.options).some(o => o.value === oldJob) ? oldJob : "";
   updateDepartmentOptions();
-  if(Array.from(document.getElementById("department").options).some(o=>o.value===oldDept)) document.getElementById("department").value=oldDept;
-  else if(oldDept) alert("選択したユニフォームには現在の部署が設定されていません。部署を選択し直してください。");
-  if(oldJob && !document.getElementById("job").value) alert("選択したユニフォームには現在の職種が設定されていません。職種を選択し直してください。");
-  resetProductAndPatternAfterUniformChange(); updateLendingPatternOptions();
+
+  const departmentAvailable = !!oldDept && Array.from(departmentSelect.options).some(o => o.value === oldDept);
+  if (departmentAvailable) {
+    departmentSelect.value = oldDept;
+    lastUniformDepartmentBeforeChange = oldDept;
+    uniformDepartmentAlertActive = false;
+  } else {
+    departmentSelect.value = "";
+    if (oldDept && !uniformDepartmentAlertActive) {
+      uniformDepartmentAlertActive = true;
+      alert("選択したユニフォームには現在の部署が設定されていません。部署を選択し直してください。");
+    }
+  }
+  if (oldJob && !jobSelect.value) alert("選択したユニフォームには現在の職種が設定されていません。職種を選択し直してください。");
+  resetProductAndPatternAfterUniformChange();
+  updateLendingPatternOptions();
 }
 
 /* ======================== */
@@ -1692,16 +1715,16 @@ function normalizeKanaForInput(value) {
 function buildRosterBasicInfoState(candidate, source = "roster") {
   const state = {
     source,
-    employeeNo: String(candidate?.employeeNo ?? "").trim(),
-    sei: String(candidate?.sei ?? "").trim(),
-    mei: String(candidate?.mei ?? "").trim(),
-    seiKana: normalizeKanaForInput(candidate?.seiKana),
-    meiKana: normalizeKanaForInput(candidate?.meiKana),
-    gender: String(candidate?.gender ?? "").trim(),
-    job: String(candidate?.job ?? "").trim(),
-    department: String(candidate?.department ?? "").trim(),
-    lendingGroup: String(candidate?.lendingGroup ?? "").trim(),
-    lendingPatternCode: String(candidate?.lendingPatternCode ?? candidate?.assignedPatternCode ?? "").trim()
+    employeeNo: getRosterCandidateValue(candidate, ["職員番号", "employeeNo", "staffNo"]),
+    sei: getRosterCandidateValue(candidate, ["姓", "氏", "sei"]),
+    mei: getRosterCandidateValue(candidate, ["名", "mei"]),
+    seiKana: normalizeKanaForInput(getRosterCandidateValue(candidate, ["セイ", "シ", "seiKana"])),
+    meiKana: normalizeKanaForInput(getRosterCandidateValue(candidate, ["メイ", "meiKana"])),
+    gender: getRosterCandidateValue(candidate, ["性別", "gender"]),
+    job: getRosterCandidateValue(candidate, ["職種", "job"]),
+    department: getRosterCandidateValue(candidate, ["部署", "department"]),
+    lendingGroup: getRosterCandidateValue(candidate, ["貸与グループ", "登録貸与グループ", "lendingGroup"]),
+    lendingPatternCode: getRosterCandidateValue(candidate, ["貸与パターンコード", "登録貸与パターンコード", "lendingPatternCode", "assignedPatternCode"])
   };
   state.displayName = `${state.sei}${state.mei}`;
   state.displayNameKana = `${state.seiKana}${state.meiKana}`;
@@ -1856,6 +1879,12 @@ function syncStepDetails(event){
  populateStepDepartments(oldDep);document.getElementById("gender").value=document.getElementById("stepGender").value;updateUniformTypeStatus();
 }
 function completeRosterStepDetails() {
+  const currentMainSeiKana = normalizeKanaForInput(document.getElementById("seiKana")?.value);
+  const currentMainMeiKana = normalizeKanaForInput(document.getElementById("meiKana")?.value);
+  if (rosterBasicInfoState) {
+    if (currentMainSeiKana) rosterBasicInfoState.seiKana = currentMainSeiKana;
+    if (currentMainMeiKana) rosterBasicInfoState.meiKana = currentMainMeiKana;
+  }
   if (rosterStepLastCandidate && rosterBasicInfoState?.source === "employee") {
     const refreshed = buildRosterBasicInfoState(rosterStepLastCandidate, "employee");
     for (const [key, value] of Object.entries(refreshed)) {
@@ -1922,11 +1951,23 @@ function backToBasicInfoFromProducts() {
   setProductSelectionVisible(false);
   document.getElementById("standardBasicInfoUi").classList.add("hidden");
   document.getElementById("rosterStepUi").classList.remove("hidden");
-  if (rosterBasicInfoState) {
-    writeBasicInfoStateToInputs(rosterBasicInfoState);
-    applyStateDetailsToStep(rosterBasicInfoState);
+  if (!rosterBasicInfoState) {
+    rosterBasicInfoState = buildManualBasicInfoState();
   }
-  fillStepDetails(rosterStepLastCandidate, rosterBasicInfoState?.source || "manual");
+  writeBasicInfoStateToInputs(rosterBasicInfoState);
+  applyStateDetailsToStep(rosterBasicInfoState);
+  const summary = document.getElementById("rosterStepSummary");
+  if (summary && rosterStepLastCandidate) {
+    summary.classList.remove("hidden");
+    summary.innerHTML = `${isEmployeeNoActive() ? `職員番号：${escapeRosterText(rosterBasicInfoState.employeeNo || "未登録")}<br>` : ""}` +
+      `姓名：${escapeRosterText(`${rosterBasicInfoState.sei || ""}${rosterBasicInfoState.mei || ""}`)}<br>` +
+      `セイメイ：${escapeRosterText(`${rosterBasicInfoState.seiKana || ""}${rosterBasicInfoState.meiKana || ""}`)}<br>` +
+      `性別：${escapeRosterText(rosterBasicInfoState.gender || "未登録")}<br>` +
+      `職種：${escapeRosterText(rosterBasicInfoState.job || "未登録")}<br>` +
+      `部署：${escapeRosterText(rosterBasicInfoState.department || "未登録")}`;
+  }
+  updateUniformTypeStatus();
+  setRosterStep("details");
 }
 async function searchRosterFromStep(mode){
   const empMode = mode === "employee";
@@ -4389,7 +4430,7 @@ function isFullWidthKatakana(value) {
   }
 
   // 全角カタカナ、長音、全角スペースのみ許可
-  return /^[ァ-ヶー　]+$/.test(text);
+  return /^[ァ-ヶーヴヷヸヹヺ・]+$/.test(normalizeKanaForInput(text));
 }
 
 async function checkRosterDuplicate(common) {
