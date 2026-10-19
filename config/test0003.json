@@ -233,8 +233,8 @@
           "productCategory": "下衣",
           "measurementGroup": "下衣",
           "sizeSuffix": "サイズ",
-          "inseamAlterable": 0,
-          "inseamMode": "",
+          "inseamAlterable": 1,
+          "inseamMode": "選択",
           "sizes": [{"value": "S", "label": "Sサイズ", "type": "standard"},{"value": "M", "label": "Mサイズ", "type": "standard"},{"value": "L", "label": "Lサイズ", "type": "standard"},{"value": "LL", "label": "LLサイズ", "type": "standard"},{"value": "EL", "label": "ELサイズ", "type": "standard"},{"value": "S1", "label": "S1サイズ", "type": "custom"},{"value": "E1", "label": "E1サイズ", "type": "custom"},{"value": "E2", "label": "E2サイズ", "type": "custom"},{"value": "E3", "label": "E3サイズ", "type": "custom"},{"value": "E4", "label": "E4サイズ", "type": "custom"},{"value": "E5", "label": "E5サイズ", "type": "custom"},{"value": "E6", "label": "E6サイズ", "type": "custom"},{"value": "別寸", "label": "別寸", "type": "bespoke"}]
         }
       ],
