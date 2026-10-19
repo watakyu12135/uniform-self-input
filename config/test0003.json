@@ -996,42 +996,7 @@
       "gender": "男性",
       "job": "救命・ICU",
       "products": [
-        {
-          "productCode": "SL5092A",
-          "name": "SL5092型上衣",
-          "color": "ターコイズ",
-          "gender": "兼用",
-          "productCategory": "スクラブ",
-          "measurementGroup": "上衣",
-          "sizeSuffix": "サイズ",
-          "inseamAlterable": 0,
-          "inseamMode": "",
-          "sizes": [{"value": "SS", "label": "SSサイズ", "type": "standard"},{"value": "S", "label": "Sサイズ", "type": "standard"},{"value": "M", "label": "Mサイズ", "type": "standard"},{"value": "L", "label": "Lサイズ", "type": "standard"},{"value": "LL", "label": "LLサイズ", "type": "standard"},{"value": "BL", "label": "BLサイズ", "type": "standard"},{"value": "3S", "label": "3Sサイズ", "type": "custom"},{"value": "B1", "label": "B1サイズ", "type": "custom"},{"value": "B3", "label": "B3サイズ", "type": "custom"},{"value": "B5", "label": "B5サイズ", "type": "custom"},{"value": "別寸", "label": "別寸", "type": "bespoke"}]
-        },
-        {
-          "productCode": "SL5092",
-          "name": "男女兼用上衣",
-          "color": "ボルドー",
-          "gender": "兼用",
-          "productCategory": "スクラブ",
-          "measurementGroup": "上衣",
-          "sizeSuffix": "サイズ",
-          "inseamAlterable": 0,
-          "inseamMode": "",
-          "sizes": [{"value": "SS", "label": "SSサイズ", "type": "standard"},{"value": "S", "label": "Sサイズ", "type": "standard"},{"value": "M", "label": "Mサイズ", "type": "standard"},{"value": "L", "label": "Lサイズ", "type": "standard"},{"value": "LL", "label": "LLサイズ", "type": "standard"},{"value": "BL", "label": "BLサイズ", "type": "standard"},{"value": "3S", "label": "3Sサイズ", "type": "custom"},{"value": "B1", "label": "B1サイズ", "type": "custom"},{"value": "B3", "label": "B3サイズ", "type": "custom"},{"value": "B5", "label": "B5サイズ", "type": "custom"},{"value": "別寸", "label": "別寸", "type": "bespoke"}]
-        },
-        {
-          "productCode": "HO1953-1",
-          "name": "男子パンツ",
-          "color": "ホワイト",
-          "gender": "男性",
-          "productCategory": "パンツ",
-          "measurementGroup": "下衣",
-          "sizeSuffix": "サイズ",
-          "inseamAlterable": 1,
-          "inseamMode": "選択",
-          "sizes": [{"value": "S", "label": "Sサイズ", "type": "standard"},{"value": "M", "label": "Mサイズ", "type": "standard"},{"value": "L", "label": "Lサイズ", "type": "standard"},{"value": "LL", "label": "LLサイズ", "type": "standard"},{"value": "BL", "label": "BLサイズ", "type": "standard"},{"value": "S1", "label": "S1サイズ", "type": "custom"},{"value": "B1", "label": "B1サイズ", "type": "custom"},{"value": "B3", "label": "B3サイズ", "type": "custom"},{"value": "B5", "label": "B5サイズ", "type": "custom"},{"value": "別寸", "label": "別寸", "type": "bespoke"}]
-        }
+
       ],
       "lendingPatterns": [],
       "categoryLimits": [
@@ -1067,42 +1032,7 @@
       "gender": "女性",
       "job": "救命・ICU",
       "products": [
-        {
-          "productCode": "SL5092A",
-          "name": "SL5092型上衣",
-          "color": "ターコイズ",
-          "gender": "兼用",
-          "productCategory": "スクラブ",
-          "measurementGroup": "上衣",
-          "sizeSuffix": "サイズ",
-          "inseamAlterable": 0,
-          "inseamMode": "",
-          "sizes": [{"value": "SS", "label": "SSサイズ", "type": "standard"},{"value": "S", "label": "Sサイズ", "type": "standard"},{"value": "M", "label": "Mサイズ", "type": "standard"},{"value": "L", "label": "Lサイズ", "type": "standard"},{"value": "LL", "label": "LLサイズ", "type": "standard"},{"value": "BL", "label": "BLサイズ", "type": "standard"},{"value": "3S", "label": "3Sサイズ", "type": "custom"},{"value": "B1", "label": "B1サイズ", "type": "custom"},{"value": "B3", "label": "B3サイズ", "type": "custom"},{"value": "B5", "label": "B5サイズ", "type": "custom"},{"value": "別寸", "label": "別寸", "type": "bespoke"}]
-        },
-        {
-          "productCode": "SL5092",
-          "name": "男女兼用上衣",
-          "color": "ボルドー",
-          "gender": "兼用",
-          "productCategory": "スクラブ",
-          "measurementGroup": "上衣",
-          "sizeSuffix": "サイズ",
-          "inseamAlterable": 0,
-          "inseamMode": "",
-          "sizes": [{"value": "SS", "label": "SSサイズ", "type": "standard"},{"value": "S", "label": "Sサイズ", "type": "standard"},{"value": "M", "label": "Mサイズ", "type": "standard"},{"value": "L", "label": "Lサイズ", "type": "standard"},{"value": "LL", "label": "LLサイズ", "type": "standard"},{"value": "BL", "label": "BLサイズ", "type": "standard"},{"value": "3S", "label": "3Sサイズ", "type": "custom"},{"value": "B1", "label": "B1サイズ", "type": "custom"},{"value": "B3", "label": "B3サイズ", "type": "custom"},{"value": "B5", "label": "B5サイズ", "type": "custom"},{"value": "別寸", "label": "別寸", "type": "bespoke"}]
-        },
-        {
-          "productCode": "FT4403-1",
-          "name": "女子パンツ",
-          "color": "ホワイト",
-          "gender": "女性",
-          "productCategory": "パンツ",
-          "measurementGroup": "下衣",
-          "sizeSuffix": "サイズ",
-          "inseamAlterable": 1,
-          "inseamMode": "選択",
-          "sizes": [{"value": "S", "label": "Sサイズ", "type": "standard"},{"value": "M", "label": "Mサイズ", "type": "standard"},{"value": "L", "label": "Lサイズ", "type": "standard"},{"value": "LL", "label": "LLサイズ", "type": "standard"},{"value": "EL", "label": "ELサイズ", "type": "standard"},{"value": "S1", "label": "S1サイズ", "type": "custom"},{"value": "E1", "label": "E1サイズ", "type": "custom"},{"value": "E2", "label": "E2サイズ", "type": "custom"},{"value": "E3", "label": "E3サイズ", "type": "custom"},{"value": "E4", "label": "E4サイズ", "type": "custom"},{"value": "E5", "label": "E5サイズ", "type": "custom"},{"value": "E6", "label": "E6サイズ", "type": "custom"},{"value": "別寸", "label": "別寸", "type": "bespoke"}]
-        }
+
       ],
       "lendingPatterns": [],
       "categoryLimits": [
@@ -1177,11 +1107,20 @@
       ],
       "lendingPatterns": [],
       "categoryLimits": [
-
+        {
+          "productCategory": "上衣",
+          "limit": 5
+        },
+        {
+          "productCategory": "パンツ",
+          "limit": 5
+        }
       ],
       "conversionRules": [
         {"fromProductCategory": "ワンピース", "toConsumptionCategory": "上衣", "qty": 1},
-        {"fromProductCategory": "ワンピース", "toConsumptionCategory": "下衣", "qty": 1}
+        {"fromProductCategory": "ワンピース", "toConsumptionCategory": "下衣", "qty": 1},
+        {"fromProductCategory": "上衣", "toConsumptionCategory": "上衣", "qty": 1},
+        {"fromProductCategory": "パンツ", "toConsumptionCategory": "パンツ", "qty": 1}
       ],
       "categoryDisplay": [
         {
@@ -1189,6 +1128,18 @@
           "displayOrder": 1,
           "heading": "ワンピースを選んで下さい",
           "note": "※ワンピースは1枚で上下各1枚分となります。"
+        },
+        {
+          "productCategory": "上衣",
+          "displayOrder": 2,
+          "heading": "上衣を選んで下さい",
+          "note": ""
+        },
+        {
+          "productCategory": "パンツ",
+          "displayOrder": 3,
+          "heading": "パンツを選んで下さい",
+          "note": ""
         }
       ]
     }
