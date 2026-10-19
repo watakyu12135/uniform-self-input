@@ -1036,12 +1036,16 @@
       "lendingPatterns": [],
       "categoryLimits": [
         {
+          "productCategory": "スクラブ",
+          "limit": 5
+        },
+        {
           "productCategory": "パンツ",
           "limit": 5
         }
       ],
       "conversionRules": [
-        {"fromProductCategory": "スクラブ", "toConsumptionCategory": "パンツ", "qty": 1},
+        {"fromProductCategory": "スクラブ", "toConsumptionCategory": "スクラブ", "qty": 1},
         {"fromProductCategory": "パンツ", "toConsumptionCategory": "パンツ", "qty": 1}
       ],
       "categoryDisplay": [
@@ -1103,12 +1107,16 @@
       "lendingPatterns": [],
       "categoryLimits": [
         {
+          "productCategory": "スクラブ",
+          "limit": 5
+        },
+        {
           "productCategory": "パンツ",
           "limit": 5
         }
       ],
       "conversionRules": [
-        {"fromProductCategory": "スクラブ", "toConsumptionCategory": "パンツ", "qty": 1},
+        {"fromProductCategory": "スクラブ", "toConsumptionCategory": "スクラブ", "qty": 1},
         {"fromProductCategory": "パンツ", "toConsumptionCategory": "パンツ", "qty": 1}
       ],
       "categoryDisplay": [
