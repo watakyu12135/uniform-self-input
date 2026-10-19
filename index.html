@@ -96,16 +96,7 @@ button {
 .roster-step-progress { display:flex; gap:8px; margin:0 0 18px; }
 .roster-step-progress > span { flex:1; padding:7px 4px; border-radius:999px; background:#e8edf3; color:#566473; font-size:13px; font-weight:700; text-align:center; }
 .roster-step-progress > span.active { background:#2f6fb2; color:#fff; }
-.roster-step-progress > span > span {
-  flex: 0 1 auto;
-  padding: 0;
-  border-radius: 0;
-  background: transparent;
-  color: inherit;
-  font-size: inherit;
-  font-weight: inherit;
-  text-align: inherit;
-}
+.roster-step-progress > span > span { flex:0 1 auto; padding:0; border-radius:0; background:transparent; color:inherit; font-size:inherit; font-weight:inherit; text-align:inherit; }
 .roster-step-panel { padding:16px; border:1px solid #cfd6df; border-radius:10px; background:#f8fafc; }
 .roster-step-panel h3 { margin:0 0 8px; }
 .step-help { margin:0 0 14px; color:#4c5b68; line-height:1.6; }
@@ -1376,8 +1367,8 @@ function getStep3BasicSignature() {
     employeeNo: String(document.getElementById("stepEmployeeNo")?.value || "").trim(),
     sei: String(document.getElementById("stepSei")?.value || "").trim(),
     mei: String(document.getElementById("stepMei")?.value || "").trim(),
-    seiKana: String(document.getElementById("stepSeiKana")?.value || "").trim(),
-    meiKana: String(document.getElementById("stepMeiKana")?.value || "").trim(),
+    seiKana: normalizeKanaForInput(document.getElementById("stepSeiKana")?.value),
+    meiKana: normalizeKanaForInput(document.getElementById("stepMeiKana")?.value),
     gender: String(document.getElementById("stepGender")?.value || "").trim(),
     alternateUniform: document.getElementById("stepAlternateUniform")?.checked === true,
     job: String(document.getElementById("stepJob")?.value || "").trim(),
@@ -1691,14 +1682,21 @@ function getRosterCandidateValue(candidate, keys) {
   }
   return "";
 }
+function normalizeKanaForInput(value) {
+  return String(value ?? "")
+    .normalize("NFKC")
+    .replace(/[\s\u3000]+/g, "")
+    .trim();
+}
+
 function buildRosterBasicInfoState(candidate, source = "roster") {
   const state = {
     source,
     employeeNo: String(candidate?.employeeNo ?? "").trim(),
     sei: String(candidate?.sei ?? "").trim(),
     mei: String(candidate?.mei ?? "").trim(),
-    seiKana: String(candidate?.seiKana ?? "").trim(),
-    meiKana: String(candidate?.meiKana ?? "").trim(),
+    seiKana: normalizeKanaForInput(candidate?.seiKana),
+    meiKana: normalizeKanaForInput(candidate?.meiKana),
     gender: String(candidate?.gender ?? "").trim(),
     job: String(candidate?.job ?? "").trim(),
     department: String(candidate?.department ?? "").trim(),
@@ -1731,6 +1729,10 @@ function buildManualBasicInfoState() {
 }
 function writeBasicInfoStateToInputs(state) {
   if (!state) return false;
+  state.seiKana = normalizeKanaForInput(state.seiKana);
+  state.meiKana = normalizeKanaForInput(state.meiKana);
+  state.displayNameKana = `${state.seiKana}${state.meiKana}`;
+  state.identityComplete = !!(state.sei && state.mei && state.seiKana && state.meiKana);
   document.getElementById("employeeNo").value = state.employeeNo || "";
   document.getElementById("stepEmployeeNo").value = state.employeeNo || "";
   document.getElementById("sei").value = state.sei || "";
@@ -4470,8 +4472,10 @@ async function submitData(event) {
 
   const sei = document.getElementById("sei").value.trim();
   const mei = document.getElementById("mei").value.trim();
-  const seiKana = document.getElementById("seiKana").value.trim();
-  const meiKana = document.getElementById("meiKana").value.trim();
+  const seiKana = normalizeKanaForInput(document.getElementById("seiKana").value);
+  const meiKana = normalizeKanaForInput(document.getElementById("meiKana").value);
+  document.getElementById("seiKana").value = seiKana;
+  document.getElementById("meiKana").value = meiKana;
 
   if (!sei) {
     alert("姓を入力してください");
