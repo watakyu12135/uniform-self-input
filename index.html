@@ -1469,6 +1469,19 @@ function isBasicInfoActive(name) {
   return info.active === true || info.active === 1 || String(info.active).toLowerCase() === "true";
 }
 
+function isMaximumLendingMethod() {
+  return isBasicInfoActive("貸与方式");
+}
+
+function normalizeLendingGroup(value) {
+  const group = String(value ?? "").trim();
+  return group === "" || group === "常勤" ? "" : group;
+}
+
+function lendingGroupsMatch(left, right) {
+  return normalizeLendingGroup(left) === normalizeLendingGroup(right);
+}
+
 function isEmployeeNoActive() {
   return isBasicInfoActive("職員番号");
 }
@@ -4206,17 +4219,19 @@ function buildLimitDeclarationHtml(jobData) {
     return "";
   }
 
+  const maximumMode = isMaximumLendingMethod();
   let html = `
     <div>
       <strong>貸与枚数は以下のとおりです</strong><br>
   `;
 
   jobData.categoryLimits.forEach(rule => {
-    html += `${rule.productCategory} ${rule.limit}枚<br>`;
+    html += maximumMode
+      ? `${rule.productCategory} 最大 ${rule.limit}枚まで<br>`
+      : `${rule.productCategory} ${rule.limit}枚<br>`;
   });
 
   html += `</div>`;
-
   return html;
 }
 
@@ -4235,7 +4250,6 @@ function updateLimitDeclarationArea() {
 }
 
 function updateCategorySummary() {
-
   const jobData = getSelectedJobData();
   const area = document.getElementById("categoryStatus");
 
@@ -4244,6 +4258,7 @@ function updateCategorySummary() {
     return;
   }
 
+  const maximumMode = isMaximumLendingMethod();
   const counts = {};
   const limits = {};
   const selectedByProductCategory = {};
@@ -4254,16 +4269,12 @@ function updateCategorySummary() {
   });
 
   const rows = document.querySelectorAll("#table tr");
-
   rows.forEach(row => {
-
     const productCategory = row.dataset.productCategory;
-
     if (!productCategory) return;
 
     const qtyInput = row.querySelector(".cell-qty input");
-    const qty = Number(qtyInput.value) || 0;
-
+    const qty = Number(qtyInput ? qtyInput.value : 0) || 0;
     if (qty <= 0) return;
 
     const sizeInfo = getRowSizeInfo(row);
@@ -4272,55 +4283,40 @@ function updateCategorySummary() {
     if (selectedByProductCategory[productCategory] === undefined) {
       selectedByProductCategory[productCategory] = 0;
     }
-
     selectedByProductCategory[productCategory] += qty;
 
     const rules = jobData.conversionRules.filter(r =>
       r.fromProductCategory === productCategory
     );
-
     rules.forEach(rule => {
-
       if (counts[rule.toConsumptionCategory] === undefined) {
         counts[rule.toConsumptionCategory] = 0;
       }
-
       counts[rule.toConsumptionCategory] += qty * rule.qty;
     });
   });
 
-  let html = "";
-html += "<h3>現在の選択枚数</h3>";
-
+  let html = "<h3>現在の選択枚数</h3>";
   Object.keys(limits).forEach(category => {
-
     const current = counts[category] || 0;
     const limit = limits[category];
-
     let className = "category-normal";
 
     if (current > limit) {
       className = "category-over";
     } else if (current === limit) {
       className = "category-ok";
-    } else if (current > 0 && limit - current === 1) {
+    } else if (!maximumMode && current > 0 && limit - current === 1) {
       className = "category-warning";
     }
 
-    html += `<div class="${className}">
-      ${category}：${current} / ${limit}
-    </div>`;
+    html += `<div class="${className}">${category}：${current} / ${limit}</div>`;
   });
-
   area.innerHTML = html;
 
-  const headingElements = document.querySelectorAll("[data-category-heading]");
-
-  headingElements.forEach(el => {
-
+  document.querySelectorAll("[data-category-heading]").forEach(el => {
     const category = el.dataset.categoryHeading;
     const countSpan = el.querySelector(".category-count");
-
     if (!countSpan) return;
 
     const limit = limits[category];
@@ -4334,35 +4330,30 @@ html += "<h3>現在の選択枚数</h3>";
     );
 
     if (limit !== undefined) {
-
-      countSpan.innerText = `（合計${limit}枚） 選択中 ${current}/${limit}`;
+      countSpan.innerText = maximumMode
+        ? `（最大${limit}枚まで） 選択中 ${current}/${limit}`
+        : `（合計${limit}枚） 選択中 ${current}/${limit}`;
 
       if (current > limit) {
         countSpan.classList.add("category-count-over");
       } else if (current === limit) {
         countSpan.classList.add("category-count-ok");
-      } else if (current > 0 && limit - current === 1) {
+      } else if (!maximumMode && current > 0 && limit - current === 1) {
         countSpan.classList.add("category-count-warning");
       }
-
     } else {
-
-      if (selected > 0) {
-        countSpan.innerText = `選択中 ${selected}枚`;
-      } else {
-        countSpan.innerText = "";
-      }
+      countSpan.innerText = selected > 0 ? `選択中 ${selected}枚` : "";
     }
   });
 }
 
 function validateCategoryLimitsBeforeSubmit() {
   const jobData = getSelectedJobData();
-
   if (!jobData || !jobData.categoryLimits || jobData.categoryLimits.length === 0) {
     return "";
   }
 
+  const maximumMode = isMaximumLendingMethod();
   const counts = {};
   const limits = {};
 
@@ -4371,9 +4362,7 @@ function validateCategoryLimitsBeforeSubmit() {
     counts[rule.productCategory] = 0;
   });
 
-  const rows = document.querySelectorAll("#table tr");
-
-  rows.forEach(row => {
+  document.querySelectorAll("#table tr").forEach(row => {
     const productCategory = row.dataset.productCategory;
     if (!productCategory) return;
 
@@ -4384,34 +4373,35 @@ function validateCategoryLimitsBeforeSubmit() {
     const sizeInfo = getRowSizeInfo(row);
     if (!sizeInfo.valid) return;
 
-    const rules = jobData.conversionRules.filter(r =>
-      r.fromProductCategory === productCategory
-    );
-
-    rules.forEach(rule => {
-      if (counts[rule.toConsumptionCategory] === undefined) {
-        counts[rule.toConsumptionCategory] = 0;
-      }
-
-      counts[rule.toConsumptionCategory] += qty * rule.qty;
-    });
+    jobData.conversionRules
+      .filter(rule => rule.fromProductCategory === productCategory)
+      .forEach(rule => {
+        if (counts[rule.toConsumptionCategory] === undefined) {
+          counts[rule.toConsumptionCategory] = 0;
+        }
+        counts[rule.toConsumptionCategory] += qty * rule.qty;
+      });
   });
 
   const messages = [];
-
   Object.keys(limits).forEach(category => {
     const current = counts[category] || 0;
     const limit = limits[category];
 
-    if (current !== limit) {
-      messages.push(category + "：現在 " + current + " / 必要 " + limit);
+    if (maximumMode ? current > limit : current !== limit) {
+      messages.push(
+        maximumMode
+          ? `${category}：現在 ${current} / 上限 ${limit}`
+          : `${category}：現在 ${current} / 必要 ${limit}`
+      );
     }
   });
 
   if (messages.length > 0) {
-    return "貸与枚数が合っていません。\n\n" + messages.join("\n");
+    return maximumMode
+      ? "貸与枚数が上限を超えています。\n\n" + messages.join("\n")
+      : "貸与枚数が合っていません。\n\n" + messages.join("\n");
   }
-
   return "";
 }
 
@@ -4725,7 +4715,7 @@ data.push({
   }
 
  if (data.length === 0) {
-  alert("商品が入力されていません（サイズ・数量）");
+  alert("商品を1枚以上選択してください。");
   return;
 }
 
