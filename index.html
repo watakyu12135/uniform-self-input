@@ -1450,7 +1450,11 @@ function changeUniformTypeChoice(checkbox) {
   }
   if (oldJob && !jobSelect.value) alert("選択したユニフォームには現在の職種が設定されていません。職種を選択し直してください。");
   resetProductAndPatternAfterUniformChange();
-  updateLendingPatternOptions();
+  updateLendingPatternOptions("", {
+    allowGroupFallback: true,
+    autoSelectSingle: true,
+    showMissingMessage: true
+  });
 }
 
 /* ======================== */
@@ -1526,40 +1530,60 @@ function clearCurrentProductSelection(preserveMeasurement = false) {
     memo: ""
   };
 }
-function updateLendingPatternOptions(selectedCode = "") {
+function updateLendingPatternOptions(selectedCode = "", behavior = {}) {
   const area = document.getElementById("lendingPatternArea");
   const optionsArea = document.getElementById("lendingPatternOptions");
   if (!area || !optionsArea) return false;
+
   const jobData = getSelectedJobBaseData();
   const allPatterns = jobData && isLendingPatternActive() && Array.isArray(jobData.lendingPatterns)
     ? [...jobData.lendingPatterns]
     : [];
-  const patterns = allPatterns
-    .filter(pattern =>
-      currentLendingGroup === null ||
-      String(pattern["貸与グループ"] || "") === currentLendingGroup
-    )
-    .sort((a, b) => (a.displayOrder || 9999) - (b.displayOrder || 9999));
+
+  let patterns = allPatterns.filter(pattern =>
+    currentLendingGroup === null ||
+    lendingGroupsMatch(pattern["貸与グループ"], currentLendingGroup)
+  );
+
+  // 名簿に登録された旧ユニフォーム側の貸与グループで0件になった場合、
+  // 異性ユニフォーム側では貸与グループの絞り込みを解除する。
+  if (patterns.length === 0 && allPatterns.length > 0 && behavior.allowGroupFallback === true) {
+    currentLendingGroup = null;
+    patterns = [...allPatterns];
+  }
+
+  patterns.sort((a, b) => (a.displayOrder || 9999) - (b.displayOrder || 9999));
   optionsArea.innerHTML = "";
+
   if (patterns.length === 0) {
     area.classList.add("hidden");
+    if (behavior.showMissingMessage === true) {
+      document.getElementById("table").innerHTML =
+        "<tr><td colspan='7'>選択したユニフォームに対応する貸与パターンが設定されていません。管理者にお問い合わせください。</td></tr>";
+      document.getElementById("categoryStatus").innerHTML = "";
+      document.getElementById("limitDeclarationArea").innerHTML = "";
+    }
     return false;
   }
+
   area.classList.remove("hidden");
   patterns.forEach(pattern => {
     const label = document.createElement("label");
     label.className = "pattern-option";
+
     const input = document.createElement("input");
     input.type = "radio";
     input.name = "lendingPattern";
     input.value = pattern["貸与パターンコード"];
     input.checked = pattern["貸与パターンコード"] === selectedCode;
     input.addEventListener("change", event => changeLendingPattern(event));
+
     const name = document.createElement("span");
     name.className = "pattern-name";
     name.textContent = pattern["貸与パターン名"];
     label.appendChild(input);
     label.appendChild(name);
+
     if (pattern.note) {
       const note = document.createElement("span");
       note.className = "pattern-note";
@@ -1568,6 +1592,16 @@ function updateLendingPatternOptions(selectedCode = "") {
     }
     optionsArea.appendChild(label);
   });
+
+  // 候補が1件だけなら利用者に再選択させず、自動選択して商品を表示する。
+  if (patterns.length === 1 && behavior.autoSelectSingle === true) {
+    const onlyInput = optionsArea.querySelector('input[name="lendingPattern"]');
+    if (onlyInput) {
+      onlyInput.checked = true;
+      changeLendingPattern();
+    }
+  }
+
   return true;
 }
 function changeLendingPattern(event = null) {
