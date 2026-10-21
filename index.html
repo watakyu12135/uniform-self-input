@@ -1421,18 +1421,12 @@ function changeUniformTypeChoice(checkbox) {
     updateUniformTypeStatus();
     return;
   }
-
   const jobSelect = document.getElementById("job");
   const departmentSelect = document.getElementById("department");
   const oldJob = jobSelect.value;
   const stateDepartment = String(rosterBasicInfoState?.department || "").trim();
   const oldDept = departmentSelect.value || lastUniformDepartmentBeforeChange || stateDepartment;
   if (departmentSelect.value) lastUniformDepartmentBeforeChange = departmentSelect.value;
-
-  // 通常画面・名簿ステップ・保持状態のチェック値を同じ状態にする。
-  const stepAlternate = document.getElementById("stepAlternateUniform");
-  if (stepAlternate) stepAlternate.checked = checkbox.checked;
-  if (rosterBasicInfoState) rosterBasicInfoState.alternateUniform = checkbox.checked;
 
   updateUniformTypeStatus();
   updateJobOptions();
@@ -1454,29 +1448,34 @@ function changeUniformTypeChoice(checkbox) {
       uniformDepartmentAlertActive = false;
     }
   }
-
-  if (oldJob && !jobSelect.value) {
-    alert("選択したユニフォームには現在の職種が設定されていません。職種を選択し直してください。");
-  }
-
+  if (oldJob && !jobSelect.value) alert("選択したユニフォームには現在の職種が設定されていません。職種を選択し直してください。");
   resetProductAndPatternAfterUniformChange();
 
-  // 貸与パターン機能を使わない顧客は、貸与ルールから直接商品を再表示する。
-  if (!isLendingPatternActive()) {
+  // 切替先に貸与パターンが実在する場合だけ、貸与パターン選択へ進む。
+  // 貸与パターン機能がONでも、切替先が0件なら貸与ルールから直接商品を表示する。
+  const destinationJobData = getSelectedJobBaseData();
+  const destinationPatterns = destinationJobData && Array.isArray(destinationJobData.lendingPatterns)
+    ? destinationJobData.lendingPatterns
+    : [];
+
+  if (isLendingPatternActive() && destinationPatterns.length > 0) {
+    updateLendingPatternOptions("", {
+      allowGroupFallback: true,
+      autoSelectSingle: true,
+      showMissingMessage: true
+    });
+  } else {
     document.getElementById("lendingPatternArea")?.classList.add("hidden");
     const patternOptions = document.getElementById("lendingPatternOptions");
     if (patternOptions) patternOptions.innerHTML = "";
-    if (jobSelect.value) {
-      createTable(currentData, jobSelect.value, getUniformTypeGender());
-    }
-    return;
-  }
 
-  updateLendingPatternOptions("", {
-    allowGroupFallback: true,
-    autoSelectSingle: true,
-    showMissingMessage: true
-  });
+    if (jobSelect.value && destinationJobData) {
+      createTable(currentData, jobSelect.value, getUniformTypeGender());
+    } else {
+      document.getElementById("table").innerHTML =
+        "<tr><td colspan='7'>選択したユニフォームに対応する貸与ルールまたは商品が設定されていません。管理者にお問い合わせください。</td></tr>";
+    }
+  }
 }
 
 /* ======================== */
@@ -1557,14 +1556,6 @@ function updateLendingPatternOptions(selectedCode = "", behavior = {}) {
   const optionsArea = document.getElementById("lendingPatternOptions");
   if (!area || !optionsArea) return false;
 
-  // 貸与パターン機能を使わない設定では、パターン0件は正常。
-  // エラー表示をせず、呼出元が貸与ルールから直接商品を作成する。
-  if (!isLendingPatternActive()) {
-    area.classList.add("hidden");
-    optionsArea.innerHTML = "";
-    return false;
-  }
-
   const jobData = getSelectedJobBaseData();
   const allPatterns = jobData && isLendingPatternActive() && Array.isArray(jobData.lendingPatterns)
     ? [...jobData.lendingPatterns]
@@ -1634,7 +1625,6 @@ function updateLendingPatternOptions(selectedCode = "", behavior = {}) {
 
   return true;
 }
-
 function changeLendingPattern(event = null) {
   if (lendingPatternChangeInProgress) return;
 
@@ -1990,11 +1980,6 @@ function completeRosterStepDetails() {
   if (isDepartmentActive() && !department) { alert("部署を選択してください"); return; }
   writeBasicInfoStateToInputs(rosterBasicInfoState);
   document.getElementById("gender").value = gender;
-
-  // ステップ画面の異性ユニフォーム選択を通常画面へ必ず同期する。
-  const alternateUniform = document.getElementById("stepAlternateUniform")?.checked === true;
-  document.getElementById("alternateUniformType").checked = alternateUniform;
-  rosterBasicInfoState.alternateUniform = alternateUniform;
   updateUniformTypeStatus();
   updateJobOptions();
   addMissingOption(document.getElementById("job"), job);
@@ -2010,7 +1995,7 @@ function completeRosterStepDetails() {
   const code = returnedFromConfirm ? "" : String(rosterBasicInfoState.lendingPatternCode || "").trim();
   const hasPatterns = updateLendingPatternOptions(code);
 
-  if (returnedFromConfirm && isLendingPatternActive()) {
+  if (returnedFromConfirm) {
     lastAcceptedLendingPatternCode = "";
     document.querySelectorAll('input[name="lendingPattern"]').forEach(input => {
       input.checked = false;
@@ -2020,17 +2005,15 @@ function completeRosterStepDetails() {
     document.getElementById("table").innerHTML = "<tr><td colspan='7'>貸与パターンを選択してください</td></tr>";
     document.getElementById("categoryStatus").innerHTML = "";
     document.getElementById("limitDeclarationArea").innerHTML = "";
-  } else if (code && isLendingPatternActive()) {
+  } else if (code) {
     document.querySelectorAll('input[name="lendingPattern"]').forEach(input => {
       input.checked = input.value === code;
       input.disabled = input.value !== code;
     });
     changeLendingPattern();
-  } else if (isLendingPatternActive() && hasPatterns) {
+  } else if (hasPatterns) {
     document.getElementById("table").innerHTML = "<tr><td colspan='7'>貸与パターンを選択してください</td></tr>";
   } else {
-    // 貸与パターンなし方式、または戻る後の再入場では現在の性別で必ず再描画する。
-    clearCurrentProductSelection(true);
     createTable(currentData, job, getUniformTypeGender());
   }
   showConfirmedBasicInfoAndProducts();
