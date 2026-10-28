@@ -2674,14 +2674,17 @@ function applyConfirmReturnData() {
   changeJob();
   currentLendingGroup = lendingGroupValue;
   rosterSearchCompleted = true;
-  if (returnEditMode) {
-    updateLendingPatternOptions(lendingPatternCode);
-    lastAcceptedLendingPatternCode = lendingPatternCode;
-    if (lendingPatternCode) changeLendingPattern();
+  // confirm.htmlから戻った場合は、新規・修正を問わず貸与パターンと商品選択を復元する。
+  updateLendingPatternOptions(lendingPatternCode);
+  lastAcceptedLendingPatternCode = lendingPatternCode;
+  if (lendingPatternCode) {
+    document.querySelectorAll('input[name="lendingPattern"]').forEach(input => {
+      input.checked = input.value === lendingPatternCode;
+    });
+    changeLendingPattern();
   } else {
-    document.getElementById("lendingPatternArea").classList.add("hidden");
-    document.getElementById("lendingPatternOptions").innerHTML = "";
-    lastAcceptedLendingPatternCode = "";
+    createTable(currentData, jobValue, getUniformTypeGender());
+    setProductSelectionVisible(true);
   }
   const departmentSelect = document.getElementById("department");
   if (departmentSelect) {
@@ -2690,7 +2693,7 @@ function applyConfirmReturnData() {
   }
 
   restoreMeasurementFromEditData(returnDraft.measurement);
-  if (returnEditMode) restoreOrdersFromEditData(returnDraft.orders);
+  restoreOrdersFromEditData(returnDraft.orders);
 
   if (returnEditMode) {
     const title = document.getElementById("pageTitle");
@@ -2713,7 +2716,13 @@ function applyConfirmReturnData() {
   updateCategorySummary();
   updateAllMeasurementButtons();
   updateAllInseamAreas();
-  if (!returnEditMode) restoreConfirmReturnToStep3(base);
+
+  // 新規登録でも貸与パターン選択へ戻さず、復元済みの商品選択画面を直接表示する。
+  confirmReturnStep3Active = false;
+  document.getElementById("standardBasicInfoUi")?.classList.remove("hidden");
+  document.getElementById("rosterStepUi")?.classList.add("hidden");
+  setProductSelectionVisible(true);
+  document.getElementById("table")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function applyEditModeData() {

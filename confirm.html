@@ -381,8 +381,10 @@ document.getElementById("returnToInputButton").addEventListener("click", () => {
     alert("戻す入力内容がありません。入力画面からやり直してください。");
     return;
   }
+  // 入力画面へ戻る場合、4桁番号は保持せず、次回confirm.htmlで必ず再入力する。
+  sessionStorage.removeItem("uniformConfirmPin");
   const pin = document.getElementById("pin");
-  if (pin) sessionStorage.setItem("uniformConfirmPin", pin.value || "");
+  if (pin) pin.value = "";
   sessionStorage.setItem("uniformReturnToIndex", "1");
   sessionStorage.setItem("uniformDraftPending", "1");
   allowApplicationNavigation = true;
