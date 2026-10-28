@@ -1013,7 +1013,17 @@ button{height:auto;min-height:44px;line-height:1.45;}
 @media(max-width:600px){.name-area{grid-template-columns:1fr!important}.basic-field{grid-template-columns:1fr}.roster-step-progress{display:grid!important;grid-template-columns:1fr!important}.basic-select-field{display:grid!important;grid-template-columns:1fr!important}.basic-select-field select{width:100%!important;max-width:100%}}
 
 </style>
-<style id="uniformI18nStyle">.uniform-language-selector{position:sticky;top:0;z-index:9999;display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:8px 12px;background:#fff;border-bottom:1px solid #d9e2ec;font-size:13px;color:#334155}.uniform-language-selector select{min-width:130px;padding:7px 30px 7px 10px;border:1px solid #94a3b8;border-radius:8px;background:#fff;color:#0f172a;font-size:14px}</style></head>
+<style id="uniformI18nStyle">.uniform-language-selector{position:sticky;top:0;z-index:9999;display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:8px 12px;background:#fff;border-bottom:1px solid #d9e2ec;font-size:13px;color:#334155}.uniform-language-selector select{min-width:130px;padding:7px 30px 7px 10px;border:1px solid #94a3b8;border-radius:8px;background:#fff;color:#0f172a;font-size:14px}</style>
+<style id="rosterCheckingOverlayStyle">
+.roster-checking-overlay{position:fixed;inset:0;z-index:25000;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.68);text-align:center}
+.roster-checking-overlay.hidden{display:none}
+.roster-checking-panel{width:min(90vw,460px);padding:34px 24px;border-radius:14px;background:#fff;box-shadow:0 14px 44px rgba(0,0,0,.38)}
+.roster-checking-wait,.roster-checking-warning{margin:0;font-size:18px;font-weight:700;line-height:1.6}
+.roster-checking-status{display:flex;justify-content:center;align-items:baseline;min-height:38px;margin:22px 0;color:#174f86;font-size:26px;font-weight:800;letter-spacing:.04em}
+.roster-checking-dots{display:inline-block;width:3ch;text-align:left;white-space:pre}
+body.roster-checking-locked{overflow:hidden}
+</style>
+</head>
 <body>
 <div class="page-shell">
 <header class="site-header">
@@ -1102,6 +1112,13 @@ button{height:auto;min-height:44px;line-height:1.45;}
 </div>
 <div id="categoryStatus"></div>
 <div class="step-actions product-action-buttons">
+<div aria-busy="true" aria-live="assertive" class="roster-checking-overlay hidden" id="rosterCheckingOverlay" role="alert">
+  <div class="roster-checking-panel">
+    <p class="roster-checking-wait">しばらくお待ち下さい。</p>
+    <div class="roster-checking-status"><span>名簿確認中</span><span class="roster-checking-dots" id="rosterCheckingDots">.</span></div>
+    <p class="roster-checking-warning">画面を閉じたり戻ったりしないで下さい。</p>
+  </div>
+</div>
 <button class="primary-action" id="submitButton" onclick="submitData(event)" type="button">確認</button>
 <button class="secondary-action hidden" id="backToBasicInfoButton" onclick="backToBasicInfoFromProducts()" type="button">戻る</button>
 </div>
@@ -4507,11 +4524,40 @@ async function checkRosterDuplicate(common) {
   if (json.result !== "ok") throw new Error(json.message || "名簿重複チェックに失敗しました。");
   return json;
 }
-function setConfirmTransitionBusy(busy) {
+let rosterCheckingTimer = null;
+let rosterCheckingDotCount = 1;
+
+function startRosterCheckingAnimation() {
+  stopRosterCheckingAnimation();
+  rosterCheckingDotCount = 1;
+  const dots = document.getElementById("rosterCheckingDots");
+  if (dots) dots.textContent = ".";
+  rosterCheckingTimer = window.setInterval(() => {
+    rosterCheckingDotCount = rosterCheckingDotCount % 3 + 1;
+    const currentDots = document.getElementById("rosterCheckingDots");
+    if (currentDots) currentDots.textContent = ".".repeat(rosterCheckingDotCount);
+  }, 500);
+}
+
+function stopRosterCheckingAnimation() {
+  if (rosterCheckingTimer) window.clearInterval(rosterCheckingTimer);
+  rosterCheckingTimer = null;
+}
+
+function setConfirmTransitionBusy(busy, showRosterOverlay = false) {
   const button = document.getElementById("submitButton");
-  if (!button) return;
-  button.disabled = busy;
-  button.innerText = busy ? "名簿確認中..." : "確認";
+  if (button) {
+    button.disabled = busy;
+    button.innerText = busy ? "名簿確認中..." : "確認";
+  }
+
+  const overlay = document.getElementById("rosterCheckingOverlay");
+  const shouldShowOverlay = busy && showRosterOverlay;
+  if (overlay) overlay.classList.toggle("hidden", !shouldShowOverlay);
+  document.body.classList.toggle("roster-checking-locked", shouldShowOverlay);
+
+  if (shouldShowOverlay) startRosterCheckingAnimation();
+  else stopRosterCheckingAnimation();
 }
 // confirm.htmlからブラウザの履歴で戻った場合、
 // bfcacheに保存された「名簿確認中...」状態を解除する。
@@ -4821,7 +4867,7 @@ if (hasBespokeWithoutMeasurement()) {
   }
 
   console.log(payload);
-  setConfirmTransitionBusy(true);
+  setConfirmTransitionBusy(true, !effectiveEditMode);
   try {
     if (effectiveEditMode) {
       payload.rosterCheck = { skipped: true, reason: "revision" };
