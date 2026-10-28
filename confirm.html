@@ -143,30 +143,13 @@ button{height:auto;min-height:44px;line-height:1.45;}
 .uniform-language-selector select,#uniformLanguageSelect{display:inline-block!important;width:auto!important;min-width:130px!important;max-width:220px!important;margin:0!important;flex:0 0 auto!important;}
 
 .check-area label{align-items:flex-start!important}.check-area input[type="checkbox"]{flex:0 0 auto;margin-top:.25em!important}.check-area label>span{min-width:0;overflow-wrap:anywhere}.info-row{display:grid;grid-template-columns:minmax(150px,auto) minmax(0,1fr);gap:6px}.info-row span{min-width:0;overflow-wrap:anywhere}@media(max-width:600px){.info-row{grid-template-columns:1fr}}
-
-.test-banner { margin: 0 0 18px; padding: 14px 16px; border: 2px solid #d97706; border-radius: 8px; background: #fff7ed; color: #7c2d12; font-weight: 800; line-height: 1.6; }
-.test-result { margin-top: 22px; padding: 16px; border: 3px solid #d97706; border-radius: 10px; background: #fffaf0; }
-.test-result h3 { margin-top: 0; color: #9a3412; }
-.test-result pre { max-height: 55vh; overflow: auto; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; background: #0f172a; color: #e2e8f0; font-size: 12px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
-.test-result-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.test-result-actions button { width: auto; flex: 1 1 180px; }
 </style>
 <style id="uniformI18nStyle">
 .uniform-language-selector{position:sticky;top:0;z-index:9999;display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:8px 12px;background:#fff;border-bottom:1px solid #d9e2ec;font-size:13px;color:#334155}
 .uniform-language-selector select{min-width:130px;padding:7px 30px 7px 10px;border:1px solid #94a3b8;border-radius:8px;background:#fff;color:#0f172a;font-size:14px}
 @media(max-width:600px){.uniform-language-selector{position:relative;padding:7px 10px}.uniform-language-selector label{font-size:12px}.uniform-language-selector select{min-width:120px}}
-</style>
-<style id="authStatusStyle">.auth-status-bar{position:sticky;top:0;z-index:10000;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 14px;background:#0f172a;color:#fff;font-size:13px}.auth-status-bar strong{color:#fde68a}.auth-status-actions{display:flex;align-items:center;gap:10px}.auth-status-bar button{width:auto!important;margin:0!important;padding:7px 12px!important;background:#fff!important;color:#0f172a!important;border:0!important;border-radius:6px!important;font-weight:700!important}.auth-status-note{white-space:nowrap}@media(max-width:600px){.auth-status-bar{align-items:flex-start;flex-direction:column}.auth-status-actions{width:100%;justify-content:space-between}}</style>
-<script src="js/app-config.js?v=7.13.2"></script>
-<script src="js/auth-client.js?v=7.13.2"></script>
-<script src="js/session-manager.js?v=7.13.2"></script>
-<script src="js/protected-page.js?v=7.13.2"></script>
-<script>window.uniformCurrentSession=window.uniformProtectedPage.validateOrRedirect();</script>
-</head>
+</style></head>
 <body>
-<div class="auth-status-bar" id="authStatusBar"><div><strong>AWS移行認証実験中</strong>　<span id="authMethodText"></span></div><div class="auth-status-actions"><span class="auth-status-note" id="authRemainingText">認証時間を確認中</span><button type="button" id="authLogoutButton">ログアウト</button></div></div>
-
-<div class="test-banner" role="status">AWS移行実験版です。登録ボタンを押しても外部へ送信されず、送信予定内容をこの画面に表示します。</div>
 <h2>登録内容確認</h2>
 <div class="error" id="message"></div>
 <!-- 基本情報 -->
@@ -251,19 +234,6 @@ button{height:auto;min-height:44px;line-height:1.45;}
 <button disabled="" id="privacyCloseButton" type="button">確認して閉じる</button>
 </div>
 </div>
-</div>
-
-<div class="test-result hidden" id="testResultArea" tabindex="-1">
-  <h3>実験版・送信予定内容</h3>
-  <p><strong>データは登録されていません。メールも送信されていません。</strong></p>
-  <p>以下は、AWS移行後にAPIへ送信する予定の内容です。</p>
-  <pre id="testPayloadOutput"></pre>
-  <div class="test-result-actions">
-    <button id="copyTestPayloadButton" type="button">JSONをコピー</button>
-    <button id="previewCompleteButton" type="button">完了画面を確認する</button>
-    <button id="editTestPayloadButton" type="button">入力内容を修正する</button>
-    <button id="nextPersonButton" type="button">次の方を入力する</button>
-  </div>
 </div>
 <div aria-busy="true" aria-live="assertive" class="sending-overlay hidden" id="sendingOverlay" role="alert">
 <div class="sending-panel">
@@ -393,10 +363,7 @@ button{height:auto;min-height:44px;line-height:1.45;}
     ]});
   });
 })();
-</script>
-<script src="js/app-config.js?v=7.13.2"></script>
-<script src="js/api-client.js"></script>
-<script>
+</script><script>
 
 /* 戻り方にかかわらず、index.htmlが確認直前の入力内容を復元できるようにする */
 let allowApplicationNavigation = false;
@@ -408,7 +375,7 @@ function markReturnToInput() {
   sessionStorage.setItem("uniformDraftPending", "1");
 }
 window.addEventListener("pagehide", markReturnToInput);
-function navigateBackToInputForEdit() {
+document.getElementById("returnToInputButton").addEventListener("click", () => {
   if (submitInProgress) return;
   if (!draft) {
     alert("戻す入力内容がありません。入力画面からやり直してください。");
@@ -422,9 +389,7 @@ function navigateBackToInputForEdit() {
   const customerKey = getCustomerKey();
   const editQuery = draft.editMode === true ? "&mode=edit" : "";
   location.replace("index.html?customer=" + encodeURIComponent(customerKey) + editQuery + "&from=confirm");
-}
-
-document.getElementById("returnToInputButton").addEventListener("click", navigateBackToInputForEdit);
+});
 
 const HP_DEADLINE_FLOW_URL = "https://defaultc8b61927a8e4402d9bae737ebea8e5.6c.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/31/workflows/09d029ec44b749c1b9e34197ba1e92f6/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=G4_LY4TPfDgAkb-D1QdZP0v1TKvBKBKtT7HW_zP36Zs";
 const FLOW_URL = "https://defaultc8b61927a8e4402d9bae737ebea8e5.6c.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/09/workflows/2213debe0fc347a489e24a4613581307/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=As4poTR9hczcDfcRWnpYA6jAD6W6GtsQSfjrqOxQsvA";  
@@ -440,147 +405,43 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-function collectDraftCustomerKeys(targetDraft) {
-  const found = [];
-  const add = (source, path) => {
-    if (!source || typeof source !== "object") return;
-    ["publicKey", "customerKey", "customer"].forEach(key => {
-      const value = String(source[key] || "").trim();
-      if (value) found.push({ path: path + "." + key, value });
-    });
-  };
-
-  add(targetDraft, "draft");
-  (targetDraft?.orders || []).forEach((order, index) => add(order, `draft.orders[${index}]`));
-  add(targetDraft?.measurement, "draft.measurement");
-  return found;
-}
-
-function lockConfirmPage(messageText) {
-  const message = document.getElementById("message");
-  if (message) {
-    message.innerText = messageText;
-    message.style.display = "block";
-    message.style.color = "#991b1b";
-    message.style.background = "#fee2e2";
-    message.style.border = "1px solid #fecaca";
-    message.style.padding = "12px";
-    message.style.borderRadius = "8px";
-  }
-
-  ["submitButton", "returnToInputButton", "confirmCheck", "duplicateConfirmCheck", "editTestPayloadButton"]
-    .forEach(id => {
-      const element = document.getElementById(id);
-      if (element) element.disabled = true;
-    });
-
-  const resultArea = document.getElementById("testPayloadResult");
-  if (resultArea) {
-    resultArea.textContent = "顧客情報の不一致を検出したため、登録予定JSONは作成していません。";
-  }
-}
-
-function validateDraftCustomerContext(targetDraft) {
-  const session = window.uniformCurrentSession || window.uniformAuth?.getSession?.();
-  const authenticatedCustomer = String(session?.customerKey || "").trim();
-
-  if (!authenticatedCustomer) {
-    return {
-      ok: false,
-      message: "認証中の顧客情報を確認できません。ログインし直してください。"
-    };
-  }
-
-  if (!targetDraft || typeof targetDraft !== "object") {
-    return {
-      ok: false,
-      message: "入力データを確認できません。入力画面からやり直してください。"
-    };
-  }
-
-  const authenticatedCode = String(session?.customerCode || "").trim();
-  const authenticatedName = String(session?.customerName || "").trim();
-  if (!authenticatedCode || !authenticatedName) {
-    return { ok: false, message: "認証セッションに顧客コードまたは顧客名称がありません。入力画面からやり直してください。" };
-  }
-
-  const values = collectDraftCustomerKeys(targetDraft);
-  if (values.length === 0) {
-    return {
-      ok: false,
-      message: "入力データに公開キーがありません。入力画面からやり直してください。"
-    };
-  }
-
-  const mismatch = values.find(item => item.value !== authenticatedCustomer);
-  if (mismatch) {
-    console.error("顧客情報の不一致を検出しました。", {
-      authenticatedCustomer,
-      mismatchPath: mismatch.path,
-      draftCustomer: mismatch.value
-    });
-    return {
-      ok: false,
-      message: "認証中の顧客と入力データの顧客が一致しません。登録処理を停止しました。入力画面へ戻ってやり直してください。"
-    };
-  }
-
-  // 入力画面で顧客コード・名称を確実に保持している商品明細だけを事前照合する。
-  // draft直下とmeasurementは項目が未設定の正常ケースがあるため、照合成功後に認証値で固定する。
-  const records = Array.isArray(targetDraft.orders) ? targetDraft.orders : [];
-  if (records.length === 0) {
-    return { ok: false, message: "照合対象となる商品明細がありません。入力画面からやり直してください。" };
-  }
-  const identityMismatch = records.find(record => {
-    const code = String(record.customerCode || record["顧客コード"] || "").trim();
-    const name = String(record.customerName || record["顧客名称"] || "").trim();
-    return !code || !name || code !== authenticatedCode || name !== authenticatedName;
-  });
-  if (identityMismatch) {
-    console.error("商品明細の顧客情報が認証セッションと一致しません。", {
-      authenticatedCode,
-      authenticatedName,
-      orderCode: String(identityMismatch.customerCode || identityMismatch["顧客コード"] || "").trim(),
-      orderName: String(identityMismatch.customerName || identityMismatch["顧客名称"] || "").trim()
-    });
-    return { ok: false, message: "認証中の顧客コード・顧客名称と商品明細が一致しません。登録処理を停止しました。" };
-  }
-
-  // 照合済みの顧客情報で、登録予定データ内の全階層を統一する。
-  targetDraft.publicKey = authenticatedCustomer;
-  targetDraft.customerCode = authenticatedCode;
-  targetDraft.customerName = authenticatedName;
-  targetDraft["顧客コード"] = authenticatedCode;
-  targetDraft["顧客名称"] = authenticatedName;
-  targetDraft.customerKey = authenticatedCustomer;
-  targetDraft.customer = authenticatedCustomer;
-  (targetDraft.orders || []).forEach(order => {
-    order.publicKey = authenticatedCustomer;
-    order.customerKey = authenticatedCustomer;
-    order.customer = authenticatedCustomer;
-    order.customerCode = authenticatedCode;
-    order.customerName = authenticatedName;
-    order["顧客コード"] = authenticatedCode;
-    order["顧客名称"] = authenticatedName;
-  });
-  if (targetDraft.measurement) {
-    targetDraft.measurement.publicKey = authenticatedCustomer;
-    targetDraft.measurement.customerKey = authenticatedCustomer;
-    targetDraft.measurement.customer = authenticatedCustomer;
-    targetDraft.measurement.customerCode = authenticatedCode;
-    targetDraft.measurement.customerName = authenticatedName;
-    targetDraft.measurement["顧客コード"] = authenticatedCode;
-    targetDraft.measurement["顧客名称"] = authenticatedName;
-  }
-  sessionStorage.setItem("uniformCustomer", authenticatedCustomer);
-  sessionStorage.setItem("uniformDraft", JSON.stringify(targetDraft));
-
-  return { ok: true, customerKey: authenticatedCustomer };
-}
-
 function getCustomerKey() {
-  const session = window.uniformCurrentSession || window.uniformAuth?.getSession?.();
-  return String(session?.customerKey || "").trim();
+  const url = new URL(window.location.href);
+  let storedDraft = null;
+  const rawDraft = sessionStorage.getItem("uniformDraft");
+
+  if (rawDraft) {
+    try {
+      storedDraft = JSON.parse(rawDraft);
+    } catch (error) {
+      console.error("uniformDraftの読み込みに失敗しました。", error);
+    }
+  }
+
+  const firstOrder =
+    draft?.orders?.[0] ||
+    storedDraft?.orders?.[0] ||
+    {};
+
+  const customerKey =
+    url.searchParams.get("customer") ||
+    sessionStorage.getItem("uniformCustomer") ||
+    draft?.publicKey ||
+    draft?.customerKey ||
+    draft?.customer ||
+    storedDraft?.publicKey ||
+    storedDraft?.customerKey ||
+    storedDraft?.customer ||
+    firstOrder.publicKey ||
+    firstOrder.customerKey ||
+    firstOrder.customer ||
+    "";
+
+  if (customerKey) {
+    sessionStorage.setItem("uniformCustomer", customerKey);
+  }
+
+  return customerKey;
 }
 
 async function checkPageDeadline() {
@@ -656,10 +517,9 @@ function loadDraft() {
       pinInput.style.cursor = "not-allowed";
     }
   } else {
-    // 新規登録では前回の4桁番号を引き継がず、必ず空欄から開始する。
-    sessionStorage.removeItem("uniformConfirmPin");
+    const savedPin = sessionStorage.getItem("uniformConfirmPin");
     if (pinInput) {
-      pinInput.value = "";
+      if (savedPin !== null) pinInput.value = savedPin;
       pinInput.readOnly = false;
       pinInput.removeAttribute("aria-readonly");
       pinInput.style.backgroundColor = "";
@@ -1128,49 +988,6 @@ function resetSubmitButton(isEdit) {
   updateSubmitButtonState();
 }
 
-function applyAuthenticatedCustomerIdentity(payload) {
-  const session = window.uniformCurrentSession || window.uniformAuth?.getSession?.();
-  const customerKey = String(session?.customerKey || "").trim();
-  const customerCode = String(session?.customerCode || "").trim();
-  const customerName = String(session?.customerName || "").trim();
-  if (!customerKey || !customerCode || !customerName) throw new Error("認証セッションの顧客情報が不足しています。入力画面からやり直してください。");
-  const apply = target => {
-    if (!target || typeof target !== "object") return;
-    target.publicKey = customerKey;
-    target.customerKey = customerKey;
-    target.customer = customerKey;
-    target.customerCode = customerCode;
-    target.customerName = customerName;
-    target["顧客コード"] = customerCode;
-    target["顧客名称"] = customerName;
-  };
-  apply(payload);
-  (payload.orders || []).forEach(apply);
-  apply(payload.measurement);
-  return { customerKey, customerCode, customerName };
-}
-
-function assertFinalCustomerIdentity(payload, identity) {
-  const records = [
-    { path: "payload", value: payload },
-    ...(payload.orders || []).map((value, index) => ({ path: `payload.orders[${index}]`, value })),
-    ...(payload.measurement ? [{ path: "payload.measurement", value: payload.measurement }] : [])
-  ];
-  const mismatch = records.find(({ value }) =>
-    String(value.publicKey || "").trim() !== identity.customerKey ||
-    String(value.customerKey || "").trim() !== identity.customerKey ||
-    String(value.customer || "").trim() !== identity.customerKey ||
-    String(value.customerCode || "").trim() !== identity.customerCode ||
-    String(value.customerName || "").trim() !== identity.customerName ||
-    String(value["顧客コード"] || "").trim() !== identity.customerCode ||
-    String(value["顧客名称"] || "").trim() !== identity.customerName
-  );
-  if (mismatch) {
-    console.error("最終JSONの顧客情報が一致しません。", mismatch);
-    throw new Error("最終JSONの顧客情報が認証中の顧客と一致しません。登録処理を停止しました。");
-  }
-}
-
 function normalizePayloadForPowerAutomate(payload){
 
   const orders = payload.orders || [];
@@ -1366,15 +1183,8 @@ const duplicateArea = document.getElementById("duplicateWarningArea");
     return;
   }
 
-  const integrity = validateDraftCustomerContext(draft);
-  if (!integrity.ok) {
-    lockConfirmPage(integrity.message);
-    alert(integrity.message);
-    return;
-  }
-
   const payload = JSON.parse(JSON.stringify(draft));
-  const customerKey = integrity.customerKey;
+  const customerKey = getCustomerKey();
   payload.publicKey = customerKey;
   payload.customerKey = customerKey;
   payload.customer = customerKey;
@@ -1469,161 +1279,84 @@ if (!payload.measurement) {
   delete payload.measurement;
 }
 
-const finalIdentity = applyAuthenticatedCustomerIdentity(payload);
 normalizePayloadForPowerAutomate(payload);
-// 正規化後にも認証済み顧客情報を再設定し、最終JSONを検証する。
-applyAuthenticatedCustomerIdentity(payload);
-assertFinalCustomerIdentity(payload, finalIdentity);
 
   try {
-    // API通信は共通クライアントへ集約する。
-    // 現在はpreviewモードのため、外部へ送信せずpayloadを返す。
-    const result = await window.uniformApiClient.submitRegistration(payload);
+    const res = await fetch(FLOW_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
 
-    stopSendingAnimation();
-    document.getElementById("sendingOverlay").classList.add("hidden");
-    document.body.classList.remove("sending-locked");
+   const text = await res.text();
 
-    if (result.preview) {
-      const resultArea = document.getElementById("testResultArea");
-      document.getElementById("testPayloadOutput").textContent =
-        JSON.stringify(result.payload, null, 2);
-      resultArea.classList.remove("hidden");
-
-      submitInProgress = false;
-      submitBtn.disabled = true;
-      submitBtn.classList.add("hidden");
-      const returnToInputButton = document.getElementById("returnToInputButton");
-      returnToInputButton.disabled = true;
-      returnToInputButton.classList.add("hidden");
-      document.getElementById("confirmCheck").disabled = true;
-      document.getElementById("duplicateConfirmCheck").disabled = true;
-
-      resultArea.focus();
-      resultArea.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (!res.ok) {
+      let errorMessage = "登録に失敗しました。時間をおいて再度お試しください。";
+      try {
+        const errorJson = JSON.parse(text);
+        if (errorJson.errorCode === "duplicate_registration_no") {
+          errorMessage =
+            "その4桁番号は同じ登録者で既に使用中です。\n" +
+            "別の番号を入力してください。";
+        } else if (errorJson.message) {
+          errorMessage = errorJson.message;
+        }
+      } catch {
+        if (text) errorMessage += "\n" + text;
+      }
+      alert(errorMessage);
+      resetSubmitButton(isEdit);
       return;
     }
 
-    alert(result.message || "登録しました。");
+    confirmRegistrationCompleted = true;
+    sessionStorage.setItem("uniformComplete", JSON.stringify({
+      measureNo: measurementNo,
+      registrationNo: registrationNo,
+      editMode: isEdit,
+      registrationType: registrationType,
+      customerKey: customerKey
+    }));
+
+    sessionStorage.setItem("uniformMailDraft", JSON.stringify(payload));
+
+    sessionStorage.removeItem("uniformDraft");
+    sessionStorage.removeItem("uniformConfirmPin");
+
+    if (isEdit) {
+      sessionStorage.removeItem("uniformEditData");
+      sessionStorage.removeItem("uniformEditCustomer");
+    }
+
+    location.href = "complete.html";
+
   } catch (err) {
-    stopSendingAnimation();
-    document.getElementById("sendingOverlay").classList.add("hidden");
-    document.body.classList.remove("sending-locked");
-    alert("登録処理中にエラーが発生しました。\n\n" + err.message);
+    alert("登録送信中にエラーが発生しました。\n通信環境を確認して、再度お試しください。\n\n" + err.message);
+
     resetSubmitButton(isEdit);
   }
-
 });
 
-
-
-document.getElementById("copyTestPayloadButton").addEventListener("click", async () => {
-  const text = document.getElementById("testPayloadOutput").textContent || "";
-  try {
-    await navigator.clipboard.writeText(text);
-    alert("送信予定のJSONをコピーしました。");
-  } catch (error) {
-    console.error("JSONのコピーに失敗しました。", error);
-    alert("自動コピーできませんでした。表示内容を選択してコピーしてください。");
-  }
-});
-
-document.getElementById("previewCompleteButton").addEventListener("click", () => {
-  if (!draft || !Array.isArray(draft.orders) || draft.orders.length === 0) {
-    alert("完了画面で確認する入力内容がありません。");
-    return;
-  }
-  // 確認画面側で採寸番号と完了画面用データを確定し、同じタブへ引き渡す。
-  const firstOrder = draft.orders[0] || {};
-  const measureNo = String(
-    draft.measureNo ||
-    draft.measurementNo ||
-    draft["採寸番号"] ||
-    firstOrder.measurementNo ||
-    firstOrder["採寸番号"] ||
-    ""
-  ).trim();
-  if (!measureNo) {
-    alert("採寸番号を取得できないため、完了画面を表示できません。");
-    return;
-  }
-  sessionStorage.setItem("uniformDraft", JSON.stringify(draft));
-  sessionStorage.setItem("uniformComplete", JSON.stringify({
-    measureNo: measureNo,
-    testMode: true
-  }));
-  sessionStorage.setItem("uniformMailDraft", JSON.stringify(draft));
-  allowApplicationNavigation = true;
-  location.href = "complete.html?test=1#measureNo=" + encodeURIComponent(measureNo);
-});
-
-document.getElementById("editTestPayloadButton").addEventListener("click", () => {
-  // 非表示・disabledになった元ボタンを経由せず、直接戻る処理を実行する。
-  navigateBackToInputForEdit();
-});
-
-document.getElementById("nextPersonButton").addEventListener("click", () => {
-  const customerKey = getCustomerKey();
-  if (!customerKey) {
-    alert("認証中の顧客情報を確認できません。ログインし直してください。");
-    return;
-  }
-
-  if (!confirm("今回の入力内容を消去して、次の方の新規入力を開始しますか？")) return;
-
-  // pagehideで確認データを再保存しないよう、完了扱いにしてから個人入力を削除する。
-  confirmRegistrationCompleted = true;
-  allowApplicationNavigation = true;
-  [
-    "uniformDraft",
-    "uniformDraftPending",
-    "uniformReturnToIndex",
-    "uniformConfirmPin",
-    "uniformEditData",
-    "uniformCustomerContextNotice"
-  ].forEach(key => sessionStorage.removeItem(key));
-
-  location.replace("index.html?customer=" + encodeURIComponent(customerKey) + "&new=1");
-});
 
 async function initializeConfirmPage() {
   try {
     loadDraft();
 
-    const integrity = validateDraftCustomerContext(draft);
-    if (!integrity.ok) {
-      lockConfirmPage(integrity.message);
-      return;
-    }
-
     const available = await checkPageDeadline();
     if (!available) return;
   } catch (err) {
-    console.error("確認画面の初期化に失敗しました。", err);
-    lockConfirmPage(
-      "確認画面の初期化に失敗しました。通信環境を確認するか、入力画面からやり直してください。"
-    );
+    console.error("HP公開期限チェックに失敗しました。", err);
+    const message = document.getElementById("message");
+    if (message) {
+      message.innerText =
+        "HP公開期限チェックに失敗しました。通信環境を確認して、もう一度お試しください。";
+    }
   }
 }
 
 initializeConfirmPage();
-</script>
-
-<script id="authStatusRuntime">
-document.addEventListener("DOMContentLoaded", function () {
-  const session = window.uniformCurrentSession || window.uniformAuth.getSession();
-  if (!session) return;
-  document.getElementById("authMethodText").textContent =
-    session.authMethod === "qr-test" ? "QRコードで認証済み" : "ID・パスワードで認証済み";
-  document.getElementById("authLogoutButton").addEventListener("click", function () {
-    window.uniformSessionManager.stop();
-    window.uniformAuth.logout("manual");
-    location.replace("login.html");
-  });
-  window.uniformSessionManager.start({
-    statusElement: document.getElementById("authRemainingText")
-  });
-});
 </script>
 </body>
 </html>
