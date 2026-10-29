@@ -30,6 +30,13 @@ button{height:auto;min-height:44px;line-height:1.45;}
 .uniform-language-selector{position:sticky;top:0;z-index:9999;display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:8px 12px;background:#fff;border-bottom:1px solid #d9e2ec;font-size:13px;color:#334155}
 .uniform-language-selector select{min-width:130px;padding:7px 30px 7px 10px;border:1px solid #94a3b8;border-radius:8px;background:#fff;color:#0f172a;font-size:14px}
 @media(max-width:600px){.uniform-language-selector{position:relative;padding:7px 10px}.uniform-language-selector label{font-size:12px}.uniform-language-selector select{min-width:120px}}
+</style><style id="completeActionButtonStyle">
+#emailValidationMessage{min-height:1.5em;margin-top:8px;font-size:14px;font-weight:700}
+#mailBtn{background:#0b74d1!important;color:#fff!important;border:1px solid #0b74d1!important;border-radius:8px!important;font-weight:700!important;box-shadow:none!important;cursor:pointer!important}
+#mailBtn:hover,#mailBtn:focus-visible{background:#095fae!important;border-color:#095fae!important}
+#finishButton{background:#d9d9d9!important;color:#222!important;border:1px solid #c6c6c6!important;border-radius:8px!important;font-weight:700!important;box-shadow:none!important;cursor:pointer!important}
+#finishButton:hover,#finishButton:focus-visible{background:#c9c9c9!important;border-color:#b8b8b8!important}
+@media(max-width:600px){#mailBtn,#finishButton{width:100%!important;min-height:50px!important;font-size:16px!important}}
 </style></head>
 <body>
 <h2>登録完了</h2>
@@ -50,16 +57,16 @@ button{height:auto;min-height:44px;line-height:1.45;}
 <div class="notice">
     採寸番号と入力内容を記録用として<br/>
     ご自身のメールアドレスに送信できます。<br/>
-<br/>
     ※ メールアドレスは弊社には登録されません。
   </div>
 <label for="email">メールアドレス</label>
 <input autocomplete="email" id="email" inputmode="email" type="email"/>
 <label for="emailConfirm">メールアドレス再入力</label>
-<input autocomplete="email" id="emailConfirm" inputmode="email" type="email"/><div id="emailValidationMessage" style="min-height:22px;margin-top:8px;font-weight:bold;"></div>
-<button class="hidden" id="mailBtn">メールを送信する</button>
+<input autocomplete="email" id="emailConfirm" inputmode="email" type="email"/>
+<div aria-live="polite" id="emailValidationMessage"></div>
+<button class="hidden" id="mailBtn" type="button">メールを送信する</button>
 </div>
-<button onclick="finish()">終了する</button>
+<button id="finishButton" onclick="finish()" type="button">終了する</button>
 <script id="uniformI18nRuntime">
 (() => {
   "use strict";
@@ -231,24 +238,34 @@ function escapeHtml(value) {
 
 /* メール入力一致チェック */
 function getEmailInputState() {
-  const e1=document.getElementById("email").value.trim();
-  const e2=document.getElementById("emailConfirm").value.trim();
-  const valid=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e1);
-  if(!e1 && !e2) return "empty";
-  if(!e1 || !e2 || e1!==e2) return "mismatch";
-  if(!valid) return "invalid";
+  const e1 = document.getElementById("email").value.trim();
+  const e2 = document.getElementById("emailConfirm").value.trim();
+  const validFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e1);
+  if (!e1 && !e2) return "empty";
+  if (!e1 || !e2 || e1 !== e2) return "mismatch";
+  if (!validFormat) return "invalid";
   return "valid";
 }
+
 function checkEmail() {
- const state=getEmailInputState();
- const msg=document.getElementById("emailValidationMessage");
- const btn=document.getElementById("mailBtn");
- btn.classList.toggle("hidden", state!=="valid");
- if(state==="mismatch"){msg.style.color="#c00";msg.textContent="メールアドレスが一致していません。";}
- else if(state==="invalid"){msg.style.color="#c00";msg.textContent="メールアドレスの形式を確認してください。";}
- else if(state==="valid"){msg.style.color="#0a7a2f";msg.textContent="✓ メールアドレスが一致しました。";}
- else {msg.textContent="";}
+  const state = getEmailInputState();
+  const btn = document.getElementById("mailBtn");
+  const message = document.getElementById("emailValidationMessage");
+  btn.classList.toggle("hidden", state !== "valid");
+  if (state === "mismatch") {
+    message.style.color = "#c00";
+    message.textContent = "メールアドレスが一致していません。";
+  } else if (state === "invalid") {
+    message.style.color = "#c00";
+    message.textContent = "メールアドレスの形式を確認してください。";
+  } else if (state === "valid") {
+    message.style.color = "#0a7a2f";
+    message.textContent = "✓ メールアドレスが一致しました。";
+  } else {
+    message.textContent = "";
+  }
 }
+
 document.getElementById("email").addEventListener("input", checkEmail);
 document.getElementById("emailConfirm").addEventListener("input", checkEmail);
 
@@ -586,9 +603,9 @@ document.getElementById("mailBtn").addEventListener("click", async () => {
 
 /* 完了後 */
 function finish() {
-  const state=getEmailInputState();
-  if(state!=="empty" && state!=="valid"){
-    if(!confirm("控えメールは送信されません。")) return;
+  const state = getEmailInputState();
+  if (state !== "empty" && state !== "valid") {
+    if (!confirm("控えメールは送信されません。")) return;
   }
   allowApplicationNavigation = true;
   sessionStorage.removeItem("uniformComplete");
