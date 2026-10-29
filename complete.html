@@ -16,6 +16,7 @@ input { font-size: 16px; padding: 8px; width: 100%; max-width: 360px; box-sizing
 button { margin-top: 16px; padding: 10px 18px; }
 .hidden { display: none; }
 .small { font-size: 13px; color: #555; margin-top: 6px; }
+.email-validation-message { min-height: 1.5em; margin-top: 8px; color: #c00; font-size: 14px; font-weight: bold; }
 
 /* ===== Multilingual flexible layout ===== */
 :where(h1,h2,h3,h4,p,li,label,button,a,.notice,.error,.success,.info-row,.item,.small){overflow-wrap:anywhere;word-break:normal;white-space:normal;}
@@ -46,20 +47,20 @@ button{height:auto;min-height:44px;line-height:1.45;}
 </div>
 <!-- メール送信（任意） -->
 <div class="section">
-<h3>控えをメールで受け取る（任意）</h3>
+<h3>入力内容の控えを自分宛に送信する（任意）</h3>
 <div class="notice">
     採寸番号と入力内容を記録用として<br/>
     ご自身のメールアドレスに送信できます。<br/>
-<br/>
     ※ メールアドレスは弊社には登録されません。
   </div>
 <label for="email">メールアドレス</label>
 <input autocomplete="email" id="email" inputmode="email" type="email"/>
 <label for="emailConfirm">メールアドレス再入力</label>
 <input autocomplete="email" id="emailConfirm" inputmode="email" type="email"/>
+<div aria-live="polite" class="email-validation-message" id="emailValidationMessage"></div>
 <button class="hidden" id="mailBtn">メールを送信する</button>
 </div>
-<button onclick="finish()">OK</button>
+<button onclick="finish()">終了する</button>
 <script id="uniformI18nRuntime">
 (() => {
   "use strict";
@@ -230,27 +231,31 @@ function escapeHtml(value) {
 }
 
 /* メール入力一致チェック */
-function checkEmail() {
+function getEmailInputState() {
   const e1 = document.getElementById("email").value.trim();
   const e2 = document.getElementById("emailConfirm").value.trim();
+  const validFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e1);
+
+  if (!e1 && !e2) return { state: "empty", e1, e2 };
+  if (!e1 || !e2 || e1 !== e2) return { state: "mismatch", e1, e2 };
+  if (!validFormat) return { state: "invalid", e1, e2 };
+  return { state: "valid", e1, e2 };
+}
+
+function checkEmail() {
+  const result = getEmailInputState();
   const btn = document.getElementById("mailBtn");
+  const message = document.getElementById("emailValidationMessage");
 
-  if (!e1 || !e2) {
-    btn.classList.add("hidden");
-    return;
+  btn.classList.toggle("hidden", result.state !== "valid");
+
+  if (result.state === "mismatch") {
+    message.innerText = "メールアドレスが一致していません。";
+  } else if (result.state === "invalid") {
+    message.innerText = "メールアドレスの形式を確認してください。";
+  } else {
+    message.innerText = "";
   }
-
-  if (e1 !== e2) {
-    btn.classList.add("hidden");
-    return;
-  }
-
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e1)) {
-    btn.classList.add("hidden");
-    return;
-  }
-
-  btn.classList.remove("hidden");
 }
 
 document.getElementById("email").addEventListener("input", checkEmail);
@@ -590,11 +595,15 @@ document.getElementById("mailBtn").addEventListener("click", async () => {
 
 /* 完了後 */
 function finish() {
+  const emailState = getEmailInputState();
+  if (emailState.state !== "empty" && emailState.state !== "valid") {
+    if (!confirm("控えメールは送信されません。")) return;
+  }
+
   allowApplicationNavigation = true;
   sessionStorage.removeItem("uniformComplete");
   sessionStorage.removeItem("uniformMailDraft");
-  allowApplicationNavigation = true;
-    location.replace("https://www.yahoo.co.jp/");
+  location.replace("https://www.yahoo.co.jp/");
 }
 </script>
 </body>
