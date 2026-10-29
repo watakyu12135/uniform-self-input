@@ -1023,7 +1023,33 @@ button{height:auto;min-height:44px;line-height:1.45;}
 .roster-checking-dots{display:inline-block;width:3ch;text-align:left;white-space:pre}
 body.roster-checking-locked{overflow:hidden}
 </style>
-</head>
+<style id="numericInputVisibilityStyle">
+/* 数量・股下加工寸法: 未選択時も入力欄だと分かる枠線 */
+.cell-qty input,
+.inseam-box input,
+.inseamCmInput,
+.inseamExceptionInput{
+  border:2px solid #9ca3af!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  box-shadow:none!important;
+  transition:border-color .15s ease,box-shadow .15s ease!important;
+}
+.cell-qty input:focus,
+.inseam-box input:focus,
+.inseamCmInput:focus,
+.inseamExceptionInput:focus{
+  border-color:#2563eb!important;
+  outline:none!important;
+  box-shadow:0 0 0 3px rgba(37,99,235,.20)!important;
+}
+.cell-qty input:disabled,
+.inseam-box input:disabled{
+  border-color:#d1d5db!important;
+  background:#f3f4f6!important;
+  box-shadow:none!important;
+}
+</style></head>
 <body>
 <div class="page-shell">
 <header class="site-header">
