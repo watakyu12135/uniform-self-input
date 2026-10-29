@@ -148,6 +148,21 @@ button{height:auto;min-height:44px;line-height:1.45;}
 .uniform-language-selector{position:sticky;top:0;z-index:9999;display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:8px 12px;background:#fff;border-bottom:1px solid #d9e2ec;font-size:13px;color:#334155}
 .uniform-language-selector select{min-width:130px;padding:7px 30px 7px 10px;border:1px solid #94a3b8;border-radius:8px;background:#fff;color:#0f172a;font-size:14px}
 @media(max-width:600px){.uniform-language-selector{position:relative;padding:7px 10px}.uniform-language-selector label{font-size:12px}.uniform-language-selector select{min-width:120px}}
+</style><style id="confirmMobileInfoStyle">
+@media(max-width:600px){
+  .info-row{
+    display:grid!important;
+    grid-template-columns:minmax(92px,32%) minmax(0,1fr)!important;
+    column-gap:10px!important;
+    align-items:start!important;
+    margin:8px 0!important;
+  }
+  .info-row span{
+    min-width:0!important;
+    overflow-wrap:anywhere!important;
+    word-break:normal!important;
+  }
+}
 </style></head>
 <body>
 <h2>登録内容確認</h2>
